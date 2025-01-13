@@ -113,7 +113,13 @@ calc_perc_agreement <- function(frame1, frame2){
   rows_to_snag <- seq(from = 1, to = nrow(frame1), by = 2)
   for(i in rows_to_snag){
     start_row <- which(new_df$Time_Relative_sf %in% frame1$Time_Relative_sf[i])
-    end_row <- which(new_df$Time_Relative_sf %in% frame1$Time_Relative_sf[i+1])-1
+    
+    if(i < nrow(frame1)){
+      end_row <- which(new_df$Time_Relative_sf %in% frame1$Time_Relative_sf[i+1])-1
+    }else{
+      end_row <- nrow(new_df)
+    }
+    
     behavior <- frame1[i,3] # Grabbing either behavior or modifier column
     new_df$behavior_1[start_row:end_row] <- behavior
   }
@@ -124,7 +130,13 @@ calc_perc_agreement <- function(frame1, frame2){
   rows_to_snag <- seq(from = 1, to = nrow(frame2), by = 2)
   for(i in rows_to_snag){
     start_row <- which(new_df$Time_Relative_sf %in% frame2$Time_Relative_sf[i])
-    end_row <- which(new_df$Time_Relative_sf %in% frame2$Time_Relative_sf[i+1])-1
+    
+    if(i < nrow(frame1)){
+      end_row <- which(new_df$Time_Relative_sf %in% frame2$Time_Relative_sf[i+1])-1
+    }else{
+      end_row <- nrow(new_df)
+    }
+    
     behavior <- frame2[i,3] # Grabbing either behavior or modifier column
     new_df$behavior_2[start_row:end_row] <- behavior
   }
