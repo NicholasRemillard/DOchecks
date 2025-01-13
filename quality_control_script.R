@@ -66,19 +66,19 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
     
   # Total plot comparison (2 videos only)
   plot_beh <- plot_annotation(video1_info = video1_info, video2_info = video2_info,
-                              tall_data1 = video1_frames$beh_frame, tall_data2 = video2_frames$beh_frame,
+                              video1_data = video1_frames$beh_frame, video2_data = video2_frames$beh_frame,
                               agree_list = beh_agree)
     
   plot_mod <- plot_annotation(video1_info = video1_info, video2_info = video2_info,
-                              tall_data1 = video1_frames$mod_frame, tall_data2 = video2_frames$mod_frame,
-                              agree_list = beh_agree)
+                              video1_data = video1_frames$mod_frame, video2_data = video2_frames$mod_frame,
+                              agree_list = mod_agree)
     
   plot_beh_int <- plot_annotation(video1_info = video1_info, video2_info = video2_info,
-                  tall_data1 = video1_frames$beh_int_frame, tall_data2 = video2_frames$beh_int_frame,
+                  video1_data = video1_frames$beh_int_frame, video2_data = video2_frames$beh_int_frame,
                   agree_list = beh_int_agree)
   
   plot_mod_int <- plot_annotation(video1_info = video1_info, video2_info = video2_info,
-                                  tall_data1 = video1_frames$mod_int_frame, tall_data2 = video2_frames$mod_int_frame,
+                                  video1_data = video1_frames$mod_int_frame, video2_data = video2_frames$mod_int_frame,
                                   agree_list = mod_int_agree)
   
   # Create ggplotly objects
@@ -104,10 +104,10 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
   
   # Total plot comparison (2 videos only)
   plot_beh <- plot_annotation(video1_info = video1_info,
-                              tall_data1 = video1_frames$beh_frame)
+                              video1_data = video1_frames$beh_frame)
   
   plot_beh_int <- plot_annotation(video1_info = video1_info,
-                                  tall_data1 = video1_frames$beh_int_frame)
+                                  video1_data = video1_frames$beh_int_frame)
   
   ggplotly(plot_beh_int)
   ggplotly(plot_beh)
@@ -119,16 +119,32 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
 # User interface
 ui <- fluidPage(
   titlePanel("Interactive ggplotly Graph"),
-  mainPanel(
-    plotlyOutput("interactive_plot")
+  sidebarLayout(
+    sidebarPanel(
+      h4("Data Summary"),
+      htmlOutput("agreement_text")
+    ),
+    mainPanel(
+      plotlyOutput("interactive_plot")
+    )
   )
 )
 
 # Server
 server <- function(input, output) {
   output$interactive_plot <- renderPlotly({
-    combined_plot
+    combined_plot %>% layout(height = 1600)
   })
+  
+  output$agreement_text <- renderText({
+    paste(
+      "Behavior of interest only percent agreement: ", beh_int_agree$percent_agreement, "%<br><br>",
+      "Overall behavior percent agreement: ", beh_agree$percent_agreement, "%<br><br>",
+      "Modifier percent agreement corresponding with behaviors of interest: ", mod_int_agree$percent_agreement, "%<br><br>",
+      "Overall modifier percent agreement: ", mod_agree$percent_agreement, "%", sep=""
+    )
+  })
+  
 }
 
 # Run the shiny app

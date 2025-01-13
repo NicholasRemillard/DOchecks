@@ -202,30 +202,30 @@ add_other_rows <- function(df) {
 }
 
 # Plotting function
-plot_annotation <- function(video1_info, tall_data1, video2_info = NULL, tall_data2 = NULL, agree_list = NULL) {
-  y_column <- if("behavior" %in% names(tall_data1)) "behavior" else if("modifier" %in% names(tall_data1)) "modifier"
+plot_annotation <- function(video1_info, video1_data, video2_info = NULL, video2_data = NULL, agree_list = NULL) {
+  y_column <- if("behavior" %in% names(video1_data)) "behavior" else if("modifier" %in% names(video1_data)) "modifier"
   
-  tall_data1[[y_column]] <- make_last_factor(tall_data1[[y_column]], "Other")
+  video1_data[[y_column]] <- make_last_factor(video1_data[[y_column]], "Other")
   
   plot <- ggplot() +
-    geom_path(data = tall_data1, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video1_info$initials))) +
+    geom_path(data = video1_data, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video1_info$initials))) +
     theme_minimal() +
-    labs(x = "Relative Time (s)", y = stringr::str_to_title(y_column)) +
+    labs(x = "Relative Time (s)", y = stringr::str_to_title(y_column), color = "Annotator") +
     theme(legend.position = "bottom") +
-    scale_x_continuous(breaks = seq(0, ceiling(max(tall_data1$Time_Relative_sf)), by = 600)) +
-    scale_y_discrete(limits = rev(levels(tall_data1[[y_column]])))
+    scale_x_continuous(breaks = seq(0, ceiling(max(video1_data$Time_Relative_sf)), by = 600)) +
+    scale_y_discrete(limits = rev(levels(video1_data[[y_column]])))
   
-  if (!is.null(video2_info) && !is.null(tall_data2)) {
-    tall_data2[[y_column]] <- make_last_factor(tall_data2[[y_column]], "Other")
+  if (!is.null(video2_info) && !is.null(video2_data)) {
+    video2_data[[y_column]] <- make_last_factor(video2_data[[y_column]], "Other")
     
     plot <- plot +
-      geom_path(data = tall_data2, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video2_info$initials)))
+      geom_path(data = video2_data, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video2_info$initials)))
   }
   
   if (!is.null(agree_list)) {
-    plot <- plot +
-      labs(title = paste(video1_info$vid_num, " Percent agreement: ",
-                         agree_list$percent_agreement, "%", sep=""))
+    # plot <- plot +
+    #   labs(title = paste(video1_info$vid_num, " Percent agreement: ",
+    #                      agree_list$percent_agreement, "%", sep=""))
     
     # Update x-axis scale if agree_list is provided
     plot <- plot +
