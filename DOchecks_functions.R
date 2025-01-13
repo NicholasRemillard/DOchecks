@@ -237,3 +237,25 @@ plot_annotation <- function(video1_info, tall_data1, video2_info = NULL, tall_da
   
   return(plot)
 }
+
+# Make plottable data function - relies on clean_raw_file function
+ready_to_plot <- function(list){
+  
+  beh_frame <- clean_raw_file(list)$tall_data_beh
+  mod_frame <- clean_raw_file(list)$tall_data_mod
+  
+  beh_int_frame <- beh_frame
+  beh_int_frame$behavior <- ifelse(beh_int_frame$behavior %in% beh_of_interest, beh_int_frame$behavior, "Other")
+  
+  mod_int_frame <- mod_frame
+  other_rows <- which(beh_int_frame$behavior %in% "Other")
+  for(i in other_rows){mod_int_frame$modifier[i] <- "Other"}
+  
+  return(list(
+    beh_frame = beh_frame,
+    mod_frame = mod_frame,
+    beh_int_frame = beh_int_frame,
+    mod_int_frame = mod_int_frame
+  ))
+  
+}
