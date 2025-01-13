@@ -8,8 +8,6 @@ rm(list = ls())
 
 # Working in OneDrive or Google Drive?
 
-# Google
-#parent_folder <- c("G:/My Drive/PA Assessment Lab (PAAL)/DO Coding/DO Training/")
 # Onedrive
 parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
 
