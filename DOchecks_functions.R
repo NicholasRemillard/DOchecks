@@ -36,6 +36,24 @@ select_video <- function(folder_path) {
   ))
 }
 
+# Function to get video info - alternative to select_video for use in shiny
+get_video_info_shiny <- function(file_name) {
+  # Select file
+  comp_name <- c(file_name)
+  
+  # Extract pattern, initials, and video number
+  pattern <- stringr::str_extract(comp_name, "[A-Z]{2,3} - CUAMC_\\d+")
+  initials <- stringr::str_extract(pattern, "[A-Z]{2,3}")
+  vid_num <- stringr::str_extract(pattern, "CUAMC_\\d+")
+  
+  # Return results as a list
+  return(list(
+    comp_name = comp_name,
+    initials = initials,
+    vid_num = vid_num
+  ))
+}
+
 # Function to fill modifier columns with values for behaviors that have no modifier
 fill_blank_mod <- function(behaviors_no_mod, values_to_check, replace_values) {
   # Find the indices where values_to_check match behaviors_no_mod
