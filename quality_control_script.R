@@ -50,21 +50,16 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
     video1_frames <- ready_to_plot(video1_info)
     video2_frames <- ready_to_plot(video2_info)
     
-    # Calculate percent agreement for behavior (2 videos only)
+    # Calculate percent agreement for behavior and modifier(2 videos only)
     beh_agree <- calc_perc_agreement(video1_frames$beh_frame, video2_frames$beh_frame)
-    
-    # Calculate percent agreement for modifier (2 videos only)
     mod_agree <- calc_perc_agreement(video1_frames$mod_frame, video2_frames$mod_frame)
   
-  
   # Compare only periods with behaviors of interest
-    # Calculate percent agreement for behavior (2 videos only)
+    # Calculate percent agreement for behavior and modifier (2 videos only)
     beh_int_agree <- calc_perc_agreement(video1_frames$beh_int_frame, video2_frames$beh_int_frame)
-    
-    # Calculate percent agreement for modifier (2 videos only)
     mod_int_agree <- calc_perc_agreement(video1_frames$mod_int_frame, video2_frames$mod_int_frame)
     
-  # Total plot comparison (2 videos only)
+  # Make plots
   plot_beh <- plot_annotation(video1_info = video1_info, video2_info = video2_info,
                               video1_data = video1_frames$beh_frame, video2_data = video2_frames$beh_frame,
                               agree_list = beh_agree)
@@ -82,35 +77,27 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
                                   agree_list = mod_int_agree)
   
   # Create ggplotly objects
-  plot_beh_interactive <- ggplotly(plot_beh)
-  plot_beh_int_interactive <- ggplotly(plot_beh_int)
-  
-  plot_mod_interactive <- ggplotly(plot_mod)
-  plot_mod_int_interactive <- ggplotly(plot_mod_int)
-  
-  combined_plot <- subplot(plot_beh_int_interactive, plot_beh_interactive,
-                           plot_mod_int_interactive, plot_mod_interactive,
-                           nrows = 4, shareX = TRUE) %>%
-    layout(
-      yaxis = list(fixedrange = TRUE),
-      yaxis2 = list(fixedrange = TRUE),
-      yaxis3 = list(fixedrange = TRUE),
-      yaxis4 = list(fixedrange = TRUE)
-    )
+  combined_plot <- make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int)
   
 }else{ # If only doing quality control on one video
   
   video1_frames <- ready_to_plot(video1_info)
   
-  # Total plot comparison (2 videos only)
+  # Make plots
   plot_beh <- plot_annotation(video1_info = video1_info,
                               video1_data = video1_frames$beh_frame)
   
-  plot_beh_int <- plot_annotation(video1_info = video1_info,
-                                  video1_data = video1_frames$beh_int_frame)
+  plot_mod <- plot_annotation(video1_info = video1_info,
+                              video1_data = video1_frames$mod_frame)
   
-  ggplotly(plot_beh_int)
-  ggplotly(plot_beh)
+  plot_beh_int <- plot_annotation(video1_info = video1_info,
+                                  video1_data = video1_frames$beh_int_frame,)
+  
+  plot_mod_int <- plot_annotation(video1_info = video1_info,
+                                  video1_data = video1_frames$mod_int_frame)
+  
+  # Create ggplotly objects
+  combined_plot <- make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int)
   
 } # End if else statement here
 

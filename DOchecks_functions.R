@@ -259,3 +259,27 @@ ready_to_plot <- function(list){
   ))
   
 }
+
+# Make 4 panel interactive plot
+make_interactive_plots <- function(plot1, plot2, plot3, plot4){
+
+  # Create ggplotly objects
+  plot_beh_interactive <- ggplotly(plot1)
+  plot_beh_int_interactive <- ggplotly(plot2)
+  
+  plot_mod_interactive <- ggplotly(plot3)
+  plot_mod_int_interactive <- ggplotly(plot4)
+  
+  combined_plot <- subplot(plot_beh_int_interactive, plot_beh_interactive,
+                           plot_mod_int_interactive, plot_mod_interactive,
+                           nrows = 4, shareX = TRUE) %>%
+    layout(
+      yaxis = list(fixedrange = TRUE),
+      yaxis2 = list(fixedrange = TRUE),
+      yaxis3 = list(fixedrange = TRUE),
+      yaxis4 = list(fixedrange = TRUE)
+    )
+  
+  return(combined_plot)
+  
+}
