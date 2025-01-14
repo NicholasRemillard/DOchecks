@@ -283,3 +283,60 @@ make_interactive_plots <- function(plot1, plot2, plot3, plot4){
   return(combined_plot)
   
 }
+
+# Check transitions
+check_transitions <- function(video_data){
+  t_rows <- which(video_data$behavior %in% "Transition")
+  t_rows <- t_rows[seq(1, length(t_rows), by=2)]
+  
+  rows_over_15 <- c()
+  for(i in t_rows){
+    if((video_data$Time_Relative_sf[i+1] - video_data$Time_Relative_sf[i]) >=15){
+      rows_over_15 <- c(rows_over_15, i)
+    }
+  }
+  if(length(rows_over_15) == 0){
+    print("No transitions are over 15 seconds.")
+  }else{
+    t_frame <- video_data[rows_over_15,] # Initialize empty frame
+    for(i in 1:nrow(t_frame)){
+      cur_t_row <- rows_over_15[i]
+      t_frame$duration[i] <- video_data$Time_Relative_sf[cur_t_row+1] - video_data$Time_Relative_sf[cur_t_row]
+    }
+  }
+  return(t_frame)
+}
+
+# Check quick alternating activities
+check_alternating <- function(video_data, number_seqs = 5, seq_duration = 10){
+  video_data$duration <- NA
+  rows_to_fill <- seq(1, nrow(video_data), by=2)
+  
+  for(i in rows_to_fill){
+    video_data$duration[i] <- video_data$Time_Relative_sf[i+1] - video_data$Time_Relative_sf[i]
+  }
+  video_data2 <- video_data %>% na.omit()
+  
+  # Find sequential durations below threshold of seq_duration
+  below_duration <- video_data2$duration < seq_duration
+  runs <- rle(below_duration)
+  
+  long_runs <- which(runs$values == TRUE & runs$lengths >= number_seqs)
+  
+  ends <- cumsum(runs$lengths)
+  end_indices <- ends[long_runs]
+  start_indices <- (end_indices - runs$lengths[long_runs]) + 1
+  
+  for(i in 1:length(start_indices)){
+    if(!exists("new_vector")){
+      new_vector <- c(start_indices[i]:end_indices[i])
+    }else{
+      new_vector <- c(new_vector, start_indices[i]:end_indices[i])
+    }
+  }
+  
+  video_data2 <- video_data2[new_vector,]
+  
+  return(video_data2)
+
+}

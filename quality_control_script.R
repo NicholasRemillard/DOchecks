@@ -99,6 +99,18 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
   # Create ggplotly objects
   combined_plot <- make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int)
   
+  # Check transitions
+  check_transitions(video1_frames$beh_frame)
+  
+  # Check periods where activities quickly alternate
+  check_alternating(video_data = video1_frames$beh_frame, number_seqs = 5, seq_duration = 10)
+  
+  # Check for long periods of activity
+  check_long_activities()
+  
+  # Check for comments
+  check_comments(video1_info$raw_file)
+  
 } # End if else statement here
 
 # Shiny app ----
