@@ -340,3 +340,52 @@ check_alternating <- function(video_data, number_seqs = 5, seq_duration = 10){
   return(video_data2)
 
 }
+
+# Check for long periods of activity
+check_long_activities <- function(video_data, duration = 900){
+  video_data$duration <- NA
+  rows_to_fill <- seq(1, nrow(video_data), by=2)
+  
+  for(i in rows_to_fill){
+    video_data$duration[i] <- video_data$Time_Relative_sf[i+1] - video_data$Time_Relative_sf[i]
+  }
+  video_data2 <- video_data %>% na.omit()
+  
+  long_indices <- which(video_data2$duration >= duration)
+  
+  video_data2 <- video_data2[long_indices,]
+  
+  return(video_data2)
+}
+
+# Check for comments
+check_comments <- function(raw_file){
+  start_time <- raw_file$Comment[1]
+  
+  comment_rows <- which(complete.cases(raw_file$Comment))
+  
+  comment_frame <- raw_file[comment_rows,] %>% select(Time_Relative_sf, Behavior, Modifier_1, Event_Type, Comment)
+  
+  return(list(
+    start_time = start_time,
+    comment_frame = comment_frame
+  ))
+}
+
+# Calculate ICC function
+calculate_ICC <- function(agreement_frame){
+  list_all <- factor(unique(c(agreement_frame$behavior_1, agreement_frame$behavior_2)))
+  
+  agreement_frame$behavior_1 <- factor(agreement_frame$behavior_1, levels = list_all)
+  agreement_frame$behavior_2 <- factor(agreement_frame$behavior_2, levels = list_all)
+  
+  agreement_frame$behavior_1_numeric <- as.numeric(factor(agreement_frame$behavior_1))
+  agreement_frame$behavior_2_numeric <- as.numeric(factor(agreement_frame$behavior_2))
+  
+  ratings <- cbind(agreement_frame$behavior_1_numeric, agreement_frame$behavior_2_numeric)
+  
+  icc_result <- icc(ratings, model = "twoway", type = "agreement", unit = "single")
+  
+  return(icc_result)
+  
+}

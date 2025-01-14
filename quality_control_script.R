@@ -15,7 +15,7 @@ library(gridExtra)
 library(stringr)
 library(plotly)
 library(shiny)
-library(htmlwidgets)
+library(irr)
 
 source("DOchecks_functions.R")
 
@@ -76,8 +76,29 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
                                   video1_data = video1_frames$mod_int_frame, video2_data = video2_frames$mod_int_frame,
                                   agree_list = mod_int_agree)
   
+  
+  # Calculate ICC
+  calculate_ICC(beh_agree$agreement_frame)
+  calculate_ICC(mod_agree$agreement_frame)
+  
   # Create ggplotly objects
   combined_plot <- make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int)
+  
+  # Check transitions
+  check_transitions(video1_frames$beh_frame)
+  check_transitions(video2_frames$beh_frame)
+  
+  # Check periods where activities quickly alternate
+  check_alternating(video_data = video1_frames$beh_frame, number_seqs = 5, seq_duration = 10)
+  check_alternating(video_data = video2_frames$beh_frame, number_seqs = 5, seq_duration = 10)
+  
+  # Check for long periods of activity
+  check_long_activities(video_data = video1_frames$beh_frame, duration = 900)
+  check_long_activities(video_data = video2_frames$beh_frame, duration = 900)
+  
+  # Check for comments
+  check_comments(video1_info$raw_file)
+  check_comments(video2_info$raw_file)
   
 }else{ # If only doing quality control on one video
   
@@ -106,7 +127,7 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
   check_alternating(video_data = video1_frames$beh_frame, number_seqs = 5, seq_duration = 10)
   
   # Check for long periods of activity
-  check_long_activities()
+  check_long_activities(video_data = video1_frames$beh_frame, duration = 900)
   
   # Check for comments
   check_comments(video1_info$raw_file)
