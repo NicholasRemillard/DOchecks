@@ -22,7 +22,7 @@ ui <- fluidPage(
       fileInput("video1_info",
                 "Select an annotated participant file.",
                 accept = ".xlsx"
-                ),
+      ),
       selectInput("compare_files_yesno",
                   "Are you comparing two files?",
                   c("No, one video only" = "no", "Yes" = "yes")),
@@ -35,9 +35,16 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
-      textOutput("data_info"),
-      tableOutput("view"),
-      plotlyOutput("my_plot")
+      tabsetPanel(
+        tabPanel("Info", uiOutput("name")),
+        # tabPanel("Raw file", tableOutput("raw_table")),
+        # tabPanel("All behavior table", tableOutput("beh_table")),
+        # tabPanel("All modifier table", tableOutput("mod_table")),
+        # tabPanel("Behavior of interest table", tableOutput("beh_int_table")),
+        # tabPanel("Modifier of interest table", tableOutput("mod_int_table")),
+        #tabPanel("Transition Table", tableOutput("view"))
+        tabPanel("Plot", plotlyOutput("my_plot"))
+      )
     )
   )
 )
@@ -45,110 +52,155 @@ ui <- fluidPage(
 server <- function(input, output) {
   # Server logic goes here
   
-  output$data_info <- renderText({
+  # Make re usable objects first
+  vid_name <- reactive({
     req(input$video1_info)
     file_name <- input$video1_info$name
     file_info <- get_video_info_shiny(file_name)
     paste(file_info$initials, file_info$vid_num, sep=" - ")
   })
   
-  data1 <- reactive({
-    req(input$video1_info)
-    inFile <- input$video1_info
-    if (is.null(inFile))
-      return(NULL)
-    
-    file_name <- input$video1_info$name
+  vid2_name <- reactive({
+    req(input$video2_info)
+    file_name <- input$video2_info$name
     file_info <- get_video_info_shiny(file_name)
-    vid_name <- paste(file_info$initials, file_info$vid_num, sep=" - ")
-    
-    video1_raw_frame <- read_excel(inFile$datapath)
-    video1_frames <- ready_to_plot_shiny(video1_raw_frame, vid_name)
-    check_transitions(video1_frames$beh_frame)
+    paste(file_info$initials, file_info$vid_num, sep=" - ")
   })
   
-  # data2 <- reactive({
-  #   req(input$video2_info)
-  #   file_name2 <- input$video2_info$name
-  #   file_info2 <- get_video_info_shiny(file_name2)
-  #   vid_name2 <- paste(file_info2$initials, file_info2$vid_num, sep=" - ")
-  #     
-  #   inFile2 <- input$video2_info
-  #   if (is.null(inFile2))
-  #     return(NULL)
-  #   video2_raw_frame <- read_excel(inFile2$datapath)
-  #     
-  #   video2_frames <- ready_to_plot_shiny(video2_raw_frame, vid_name2)
-  # })
-  # 
-  output$view <- renderTable({
-    req(data1())
+  output$name <- renderUI({
+    if(!is.null(input$video2_info)){
+      HTML(paste("Video 1: ", vid_name(), "<br><br>", "Video 2: ", vid2_name()))
+    }else{
+      HTML(paste("Video 1: ", vid_name()))
+    }
   })
+  
+  video1_raw_frame <- reactive({
+    req(input$video1_info)
+    inFile <- input$video1_info
+    read_excel(inFile$datapath)
+  })
+  
+  video2_raw_frame <- reactive({
+    req(input$video2_info)
+    inFile <- input$video2_info
+    read_excel(inFile$datapath)
+  })
+  
+  # output$raw_table <- renderTable({
+  #   head(video1_raw_frame())
+  # })
+  
+  video1_beh_frame <- reactive({
+    req(video1_raw_frame(), vid_name())
+    all_frames <- ready_to_plot_shiny(video1_raw_frame(), vid_name())
+    all_frames$beh_frame
+  })
+  
+  video2_beh_frame <- reactive({
+    req(video2_raw_frame(), vid2_name())
+    all_frames <- ready_to_plot_shiny(video2_raw_frame(), vid2_name())
+    all_frames$beh_frame
+  })
+  
+  # output$beh_table <- renderTable({
+  #   req(video1_beh_frame())
+  #   head(video1_beh_frame())
+  # })
+  
+  video1_mod_frame <- reactive({
+    req(video1_raw_frame(), vid_name())
+    all_frames <- ready_to_plot_shiny(video1_raw_frame(), vid_name())
+    all_frames$mod_frame
+  })
+  
+  video2_mod_frame <- reactive({
+    req(video2_raw_frame(), vid2_name())
+    all_frames <- ready_to_plot_shiny(video2_raw_frame(), vid2_name())
+    all_frames$mod_frame
+  })
+  
+  # output$mod_table <- renderTable({
+  #   req(video1_mod_frame())
+  #   head(video1_mod_frame())
+  # })
+  
+  video1_beh_int_frame <- reactive({
+    req(video1_raw_frame(), vid_name())
+    all_frames <- ready_to_plot_shiny(video1_raw_frame(), vid_name())
+    all_frames$beh_int_frame
+  })
+  
+  video2_beh_int_frame <- reactive({
+    req(video2_raw_frame(), vid2_name())
+    all_frames <- ready_to_plot_shiny(video2_raw_frame(), vid2_name())
+    all_frames$beh_int_frame
+  })
+  
+  # output$beh_int_table <- renderTable({
+  #   req(video1_beh_int_frame())
+  #   head(video1_beh_int_frame())
+  # })
+  
+  video1_mod_int_frame <- reactive({
+    req(video1_raw_frame(), vid_name())
+    all_frames <- ready_to_plot_shiny(video1_raw_frame(), vid_name())
+    all_frames$mod_int_frame
+  })
+  
+  video2_mod_int_frame <- reactive({
+    req(video2_raw_frame(), vid2_name())
+    all_frames <- ready_to_plot_shiny(video2_raw_frame(), vid2_name())
+    all_frames$mod_int_frame
+  })
+  
+  # output$mod_int_table <- renderTable({
+  #   req(video1_mod_int_frame())
+  #   head(video1_mod_int_frame())
+  # })
   
   output$my_plot <- renderPlotly({
-    req(input$video1_info)
-    # Get video1 info
-    file_name <- input$video1_info$name
-    file_info <- get_video_info_shiny(file_name)
-    vid_name <- paste(file_info$initials, file_info$vid_num, sep=" - ")
-    
-    inFile <- input$video1_info
-    if (is.null(inFile))
-      return(NULL)
-    video1_raw_frame <- read_excel(inFile$datapath)
-    video1_frames <- ready_to_plot_shiny(video1_raw_frame, vid_name)
-    
-    # Get video2 info, if provided
-    if (!is.null(input$video2_info)) {
-      file_name2 <- input$video2_info$name
-      file_info2 <- get_video_info_shiny(file_name2)
-      vid_name2 <- paste(file_info2$initials, file_info2$vid_num, sep=" - ")
+    if(!is.null(input$video2_info)){
+      req(video1_beh_frame(), video1_mod_frame(), video1_beh_int_frame(), video1_mod_int_frame(), vid_name(),
+          video2_beh_frame(), video2_mod_frame(), video2_beh_int_frame(), video2_mod_int_frame(), vid2_name())
       
-      inFile2 <- input$video2_info
-      video2_raw_frame <- read_excel(inFile2$datapath)
+      plot_beh <- plot_annotation_shiny(vid1_name = vid_name(), vid2_name = vid2_name(),
+                                        video1_data = video1_beh_frame(),
+                                        video2_data = video2_beh_frame())
       
-      video2_frames <- ready_to_plot_shiny(video2_raw_frame, vid_name2)
+      plot_mod <- plot_annotation_shiny(vid1_name = vid_name(), vid2_name = vid2_name(),
+                                        video1_data = video1_mod_frame(),
+                                        video2_data = video2_mod_frame())
       
-      # Make plots for both videos
-      plot_beh <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
-                                        video1_data = video1_frames$beh_frame,
-                                        video2_data = video2_frames$beh_frame)
+      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name(), vid2_name = vid2_name(),
+                                            video1_data = video1_beh_int_frame(),
+                                            video2_data = video2_beh_int_frame())
       
-      plot_mod <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
-                                        video1_data = video1_frames$mod_frame,
-                                        video2_data = video2_frames$mod_frame)
-      
-      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
-                                            video1_data = video1_frames$beh_int_frame,
-                                            video2_data = video2_frames$beh_int_frame)
-      
-      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
-                                            video1_data = video1_frames$mod_int_frame,
-                                            video2_data = video2_frames$mod_int_frame)
+      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name(), vid2_name = vid2_name(),
+                                            video1_data = video1_mod_int_frame(),
+                                            video2_data = video2_mod_int_frame())
       
       # Create ggplotly objects
       make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
-      
     }else{
-      # Make plot for video1 only
-      plot_beh <- plot_annotation_shiny(vid1_name = vid_name,
-                                        video1_data = video1_frames$beh_frame)
+      req(video1_beh_frame(), video1_mod_frame(), video1_beh_int_frame(), video1_mod_int_frame(), vid_name())
       
-      plot_mod <- plot_annotation_shiny(vid1_name = vid_name,
-                                        video1_data = video1_frames$mod_frame)
+      plot_beh <- plot_annotation_shiny(vid1_name = vid_name(),
+                                        video1_data = video1_beh_frame())
       
-      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name,
-                                            video1_data = video1_frames$beh_int_frame)
+      plot_mod <- plot_annotation_shiny(vid1_name = vid_name(),
+                                        video1_data = video1_mod_frame())
       
-      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name,
-                                            video1_data = video1_frames$mod_int_frame)
+      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name(),
+                                            video1_data = video1_beh_int_frame())
+      
+      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name(),
+                                            video1_data = video1_mod_int_frame())
       
       # Create ggplotly objects
       make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
     }
-    
-  }) # End of plot output code
-  
+  }) # End of plot code
 }
 
 shinyApp(ui = ui, server = server)
