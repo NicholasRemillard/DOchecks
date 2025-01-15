@@ -2,6 +2,14 @@
 
 # SEC 2: Setup and Functions
 
+behaviors_no_mod <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
+                      "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
+                      "Treadmill Walking at slower pace than normal", "Walking Around Room", "Off Camera")
+
+beh_of_interest <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
+                     "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
+                     "Treadmill Walking at slower pace than normal", "Off Camera", "Light Calisthenics", "Dusting", "Computer Work")
+
 # Function to select videos
 select_video <- function(folder_path) {
   # Select file
@@ -90,6 +98,44 @@ clean_raw_file <- function(video_info){
   
   paste_beh <- paste("Behavior", initials, vid_num, sep="_")
   paste_mod <- paste("Modifier_1", initials, vid_num, sep="_")
+  
+  tall_data_beh <- data.frame(Time_Relative_sf = beh$Time_Relative_sf,
+                              source = rep(paste_beh, nrow(beh)),
+                              behavior = beh$Behavior)
+  
+  tall_data_mod <- data.frame(Time_Relative_sf = mod$Time_Relative_sf,
+                              source = rep(paste_mod, nrow(mod)),
+                              modifier = mod$Modifier_1)
+  return(list(
+    tall_data_beh = tall_data_beh,
+    tall_data_mod = tall_data_mod
+  ))
+}
+
+# Function to clean raw files to ready for percent agreement and graphing
+clean_raw_file_shiny <- function(raw_file, vid_name){
+  
+  raw_file <- raw_file
+  vid_name <- vid_name
+  
+  beh <- raw_file %>% select(Time_Relative_sf, Behavior)
+  
+  # Set up modifier data frames
+  mod <- raw_file %>% select(Time_Relative_sf, Modifier_1)
+  
+  # Fill in blank modifiers to separate from true NAs
+  mod$Modifier_1 <- fill_blank_mod(behaviors_no_mod, beh$Behavior, mod$Modifier_1)
+  
+  # Remove rows with NA
+  beh <- na.omit(beh)
+  
+  # Saving order of variables to correct order later
+  beh_order <- beh$Behavior
+  
+  mod_order <- mod$Modifier_1
+  
+  paste_beh <- paste("Behavior", vid_name, sep="_")
+  paste_mod <- paste("Modifier_1", vid_name, sep="_")
   
   tall_data_beh <- data.frame(Time_Relative_sf = beh$Time_Relative_sf,
                               source = rep(paste_beh, nrow(beh)),
@@ -256,11 +302,73 @@ plot_annotation <- function(video1_info, video1_data, video2_info = NULL, video2
   return(plot)
 }
 
+# Plotting function - shiny
+plot_annotation_shiny <- function(vid1_name, video1_data, vid2_name = NULL, video2_data = NULL, agree_list = NULL) {
+  y_column <- if("behavior" %in% names(video1_data)) "behavior" else if("modifier" %in% names(video1_data)) "modifier"
+  
+  video1_data[[y_column]] <- make_last_factor(video1_data[[y_column]], "Other")
+  
+  video1_initials <- stringr::str_extract(vid1_name, "[A-Z]{2,3}")
+  video2_initials <- stringr::str_extract(vid2_name, "[A-Z]{2,3}")
+  
+  plot <- ggplot() +
+    geom_path(data = video1_data, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video1_initials))) +
+    theme_minimal() +
+    labs(x = "Relative Time (s)", y = stringr::str_to_title(y_column), color = "Annotator") +
+    theme(legend.position = "bottom") +
+    scale_x_continuous(breaks = seq(0, ceiling(max(video1_data$Time_Relative_sf)), by = 600)) +
+    scale_y_discrete(limits = rev(levels(video1_data[[y_column]])))
+  
+  if (!is.null(vid2_name) && !is.null(video2_data)) {
+    video2_data[[y_column]] <- make_last_factor(video2_data[[y_column]], "Other")
+    
+    plot <- plot +
+      geom_path(data = video2_data, aes(x = Time_Relative_sf, y = .data[[y_column]], group = 1, color = paste(video2_initials)))
+  }
+  
+  if (!is.null(agree_list)) {
+    # plot <- plot +
+    #   labs(title = paste(video1_info$vid_num, " Percent agreement: ",
+    #                      agree_list$percent_agreement, "%", sep=""))
+    
+    # Update x-axis scale if agree_list is provided
+    plot <- plot +
+      scale_x_continuous(breaks = seq(0, ceiling(agree_list$max_time), by = 600))
+  } else {
+    plot <- plot +
+      labs(title = paste(vid1_name, " Data"))
+  }
+  
+  return(plot)
+}
+
 # Make plottable data function - relies on clean_raw_file function
 ready_to_plot <- function(list){
   
   beh_frame <- clean_raw_file(list)$tall_data_beh
   mod_frame <- clean_raw_file(list)$tall_data_mod
+  
+  beh_int_frame <- beh_frame
+  beh_int_frame$behavior <- ifelse(beh_int_frame$behavior %in% beh_of_interest, beh_int_frame$behavior, "Other")
+  
+  mod_int_frame <- mod_frame
+  other_rows <- which(beh_int_frame$behavior %in% "Other")
+  for(i in other_rows){mod_int_frame$modifier[i] <- "Other"}
+  
+  return(list(
+    beh_frame = beh_frame,
+    mod_frame = mod_frame,
+    beh_int_frame = beh_int_frame,
+    mod_int_frame = mod_int_frame
+  ))
+  
+}
+
+# Make plottable data function - relies on clean_raw_file function
+ready_to_plot_shiny <- function(raw_file, vid_name){
+  
+  beh_frame <- clean_raw_file_shiny(raw_file, vid_name)$tall_data_beh
+  mod_frame <- clean_raw_file_shiny(raw_file, vid_name)$tall_data_mod
   
   beh_int_frame <- beh_frame
   beh_int_frame$behavior <- ifelse(beh_int_frame$behavior %in% beh_of_interest, beh_int_frame$behavior, "Other")
