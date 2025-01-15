@@ -36,7 +36,7 @@ ui <- fluidPage(
     ),
     mainPanel(
       textOutput("data_info"),
-      #tableOutput("view"),
+      tableOutput("view"),
       plotlyOutput("my_plot")
     )
   )
@@ -52,19 +52,38 @@ server <- function(input, output) {
     paste(file_info$initials, file_info$vid_num, sep=" - ")
   })
   
-  # data <- reactive({
-  #   req(input$video1_info)
-  #   inFile <- input$video1_info
-  #   if (is.null(inFile))
+  data1 <- reactive({
+    req(input$video1_info)
+    inFile <- input$video1_info
+    if (is.null(inFile))
+      return(NULL)
+    
+    file_name <- input$video1_info$name
+    file_info <- get_video_info_shiny(file_name)
+    vid_name <- paste(file_info$initials, file_info$vid_num, sep=" - ")
+    
+    video1_raw_frame <- read_excel(inFile$datapath)
+    video1_frames <- ready_to_plot_shiny(video1_raw_frame, vid_name)
+    check_transitions(video1_frames$beh_frame)
+  })
+  
+  # data2 <- reactive({
+  #   req(input$video2_info)
+  #   file_name2 <- input$video2_info$name
+  #   file_info2 <- get_video_info_shiny(file_name2)
+  #   vid_name2 <- paste(file_info2$initials, file_info2$vid_num, sep=" - ")
+  #     
+  #   inFile2 <- input$video2_info
+  #   if (is.null(inFile2))
   #     return(NULL)
-  #   video1_raw_frame <- read_excel(inFile$datapath)
-  #   read_excel(inFile$datapath)
+  #   video2_raw_frame <- read_excel(inFile2$datapath)
+  #     
+  #   video2_frames <- ready_to_plot_shiny(video2_raw_frame, vid_name2)
   # })
   # 
-  # output$view <- renderTable({
-  #   req(data())
-  #   head(data())
-  # })
+  output$view <- renderTable({
+    req(data1())
+  })
   
   output$my_plot <- renderPlotly({
     req(input$video1_info)
@@ -128,7 +147,7 @@ server <- function(input, output) {
       make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
     }
     
-  })
+  }) # End of plot output code
   
 }
 
