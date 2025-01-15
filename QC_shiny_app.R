@@ -79,21 +79,55 @@ server <- function(input, output) {
     video1_raw_frame <- read_excel(inFile$datapath)
     video1_frames <- ready_to_plot_shiny(video1_raw_frame, vid_name)
     
-    # Make plots
-    plot_beh <- plot_annotation_shiny(vid1_name = vid_name,
-                                      video1_data = video1_frames$beh_frame)
+    # Get video2 info, if provided
+    if (!is.null(input$video2_info)) {
+      file_name2 <- input$video2_info$name
+      file_info2 <- get_video_info_shiny(file_name2)
+      vid_name2 <- paste(file_info2$initials, file_info2$vid_num, sep=" - ")
+      
+      inFile2 <- input$video2_info
+      video2_raw_frame <- read_excel(inFile2$datapath)
+      
+      video2_frames <- ready_to_plot_shiny(video2_raw_frame, vid_name2)
+      
+      # Make plots for both videos
+      plot_beh <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
+                                        video1_data = video1_frames$beh_frame,
+                                        video2_data = video2_frames$beh_frame)
+      
+      plot_mod <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
+                                        video1_data = video1_frames$mod_frame,
+                                        video2_data = video2_frames$mod_frame)
+      
+      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
+                                            video1_data = video1_frames$beh_int_frame,
+                                            video2_data = video2_frames$beh_int_frame)
+      
+      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name, vid2_name = vid_name2,
+                                            video1_data = video1_frames$mod_int_frame,
+                                            video2_data = video2_frames$mod_int_frame)
+      
+      # Create ggplotly objects
+      make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
+      
+    }else{
+      # Make plot for video1 only
+      plot_beh <- plot_annotation_shiny(vid1_name = vid_name,
+                                        video1_data = video1_frames$beh_frame)
+      
+      plot_mod <- plot_annotation_shiny(vid1_name = vid_name,
+                                        video1_data = video1_frames$mod_frame)
+      
+      plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name,
+                                            video1_data = video1_frames$beh_int_frame)
+      
+      plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name,
+                                            video1_data = video1_frames$mod_int_frame)
+      
+      # Create ggplotly objects
+      make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
+    }
     
-    plot_mod <- plot_annotation_shiny(vid1_name = vid_name,
-                                      video1_data = video1_frames$mod_frame)
-    
-    plot_beh_int <- plot_annotation_shiny(vid1_name = vid_name,
-                                          video1_data = video1_frames$beh_int_frame,)
-    
-    plot_mod_int <- plot_annotation_shiny(vid1_name = vid_name,
-                                          video1_data = video1_frames$mod_int_frame)
-    
-    # Create ggplotly objects
-    make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
   })
   
 }
