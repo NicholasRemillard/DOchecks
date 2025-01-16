@@ -37,6 +37,10 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Info", uiOutput("name")),
+        tabPanel("Transitions", tableOutput("transitions1"),tableOutput("transitions2")),
+        tabPanel("Alternating", tableOutput("alternating1"),tableOutput("alternating2")),
+        tabPanel("Long Activities", tableOutput("long1"),tableOutput("long2")),
+        tabPanel("Comments", tableOutput("comments1"),tableOutput("comments2")),
         # tabPanel("Raw file", tableOutput("raw_table")),
         # tabPanel("All behavior table", tableOutput("beh_table")),
         # tabPanel("All modifier table", tableOutput("mod_table")),
@@ -201,6 +205,59 @@ server <- function(input, output) {
       make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int) %>% layout(height = 1600)
     }
   }) # End of plot code
-}
+  
+  # Transitions
+  output$transitions1 <- renderTable({
+    req(video1_beh_frame())
+    check_transitions(video1_beh_frame())
+  })
+  
+  output$transitions2 <- renderTable({
+    if(!is.null(input$video2_info)){
+      req(video2_beh_frame())
+      check_transitions(video2_beh_frame())
+    }else{return(NULL)}
+  })
+  
+  # Short alternating periods
+  output$alternating1 <- renderTable({
+    req(video1_beh_frame())
+    check_alternating(video_data = video1_beh_frame(), number_seqs = 5, seq_duration = 10)
+  })
+  
+  output$alternating2 <- renderTable({
+    if(!is.null(input$video2_info)){
+      req(video2_beh_frame())
+      check_alternating(video_data = video2_beh_frame(), number_seqs = 5, seq_duration = 10)
+    }else{return(NULL)}
+  })
+  
+  # Long periods
+  output$long1 <- renderTable({
+    req(video1_beh_frame())
+    check_long_activities(video_data = video1_beh_frame(), duration = 900)
+  })
+  
+  output$long2 <- renderTable({
+    if(!is.null(input$video2_info)){
+      req(video2_beh_frame())
+      check_long_activities(video_data = video2_beh_frame(), duration = 900)
+    }else{return(NULL)}
+  })
+  
+  # Comments
+  output$comments1 <- renderTable({
+    req(video1_raw_frame())
+    check_comments(video1_raw_frame())$comment_frame
+  })
+  
+  output$comments2 <- renderTable({
+    if(!is.null(input$video2_info)){
+      req(video2_raw_frame())
+      check_comments(video2_raw_frame())$comment_frame
+    }else{return(NULL)}
+  })
+  
+} # End of server code
 
 shinyApp(ui = ui, server = server)
