@@ -30,9 +30,14 @@ behaviors_no_mod <- c("Treadmill Running at slower pace than normal", "Treadmill
                       "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
                       "Treadmill Walking at slower pace than normal", "Walking Around Room", "Off Camera")
 
-beh_of_interest <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
+beh_of_interest <- c("Off Camera", "Unknown",
+                     "Reading", "Writing", "Watching Television", "Computer Work",
+                     "Sweeping the Floor", "Dusting", "Vacuuming", "Folding Clothes/putting clothes away", "Cleaning Window/mirror",
+                     "Moving Boxes",
+                     "Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
                      "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
-                     "Treadmill Walking at slower pace than normal", "Off Camera", "Light Calisthenics", "Dusting", "Computer Work")
+                     "Treadmill Walking at slower pace than normal", "Walking around room",
+                     "Light Calisthenics", "Resistance Exercise with weights", "Yoga")
 
 
 # SEC 3: Select video to assess ----
