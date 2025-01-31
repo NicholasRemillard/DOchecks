@@ -520,3 +520,21 @@ calculate_ICC <- function(agreement_frame){
   return(icc_result)
   
 }
+
+# Calculate ICC function - training
+calculate_training_ICC <- function(vector_1, vector_2){
+  list_all <- factor(unique(c(vector_1, vector_2)))
+  
+  vector_1 <- factor(vector_1, levels = list_all)
+  vector_2 <- factor(vector_2, levels = list_all)
+  
+  vector_1_numeric <- as.numeric(factor(vector_1))
+  vector_2_numeric <- as.numeric(factor(vector_2))
+  
+  ratings <- cbind(vector_1_numeric, vector_2_numeric)
+  
+  icc_result <- icc(ratings, model = "twoway", type = "agreement", unit = "single")
+  
+  return(icc_result)
+  
+}
