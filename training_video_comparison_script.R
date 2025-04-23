@@ -45,7 +45,7 @@ if (file.exists(training_file_name)) {
 setwd(paste(parent_folder, ready_check_child, sep=""))
 dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
 comp_name <- file.choose()
-compare <- read_excel(comp_name)
+compare_frame <- read_excel(comp_name)
 
 pattern <- str_extract(comp_name, "[A-Z]{2,3} - [tT]raining_\\d+")
 initials <- str_extract(pattern, "[A-Z]{2,3}")
@@ -74,7 +74,17 @@ if(vid_num %in% NA){
 crit_path <- paste(parent_folder, criterion_child, sep="")
 crit_files <- list.files(crit_path)
 crit_name <- crit_files[grep(vid_num, crit_files)]
-criterion <- read_excel(paste(crit_path,crit_name, sep = "/"))
+criterion_frame <- read_excel(paste(crit_path,crit_name, sep = "/"))
+
+beh_plot <- plot_comparison(criterion_data = criterion_frame, comparison_data = compare_frame, input_column = "Behavior")
+mod1_plot <- plot_comparison(criterion_data = criterion_frame, comparison_data = compare_frame, input_column = "Modifier_1")
+
+
+
+
+
+
+
 
 # SEC 3: For modifiers, manually tell which behaviors do not have modifiers ----
 behaviors_no_mod <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
@@ -271,6 +281,15 @@ if(percent_agreement_b < 90.0 | percent_agreement_m < 90.0){
 
 # Putting plots together
 combined_plot <- grid.arrange(b_plot, m_plot, top = paste(vid_num, ": ", did_pass, sep=""))
+
+
+
+
+
+
+
+
+
 
 # Saving plot
 plot_path <- paste(parent_folder, "Training Graphs", sep="")
