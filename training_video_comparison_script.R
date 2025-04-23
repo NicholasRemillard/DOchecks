@@ -18,6 +18,8 @@ library(stringr)
 library(writexl)
 library(lubridate)
 
+source("training_video_comparison_functions.R")
+
 # Onedrive
 parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
 
@@ -45,9 +47,9 @@ dlg_message("Select the desired training video (must be an excel file with one s
 comp_name <- file.choose()
 compare <- read_excel(comp_name)
 
-pattern <- str_extract(comp_name, "[A-Z]{2,3} - training_\\d+")
+pattern <- str_extract(comp_name, "[A-Z]{2,3} - [tT]raining_\\d+")
 initials <- str_extract(pattern, "[A-Z]{2,3}")
-vid_num <- str_extract(pattern, "training_\\d+")
+vid_num <- str_extract(pattern, "[tT]raining_\\d+")
 
 attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
 
