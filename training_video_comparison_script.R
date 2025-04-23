@@ -2,19 +2,11 @@
 # Created by Nick Remillard 2/8/2024
 # For DO Coding Training Purposes Only
 
-# Script last updated: 10/15/2024
+# Script last updated: 2/19/2025
 
 rm(list = ls())
 
-# Working in OneDrive or Google Drive?
-
-# Onedrive
-parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
-
-ready_check_child <- c("Ready-to-check Observer Excel Files")
-criterion_child <- c("Criterion Video Files")
-
-# SEC 1: Load necessary packages ----
+# SEC 1: Load necessary packages and master file----
 
 library(readxl)
 library(dplyr)
@@ -23,6 +15,29 @@ library(tidyr)
 library(svDialogs)
 library(gridExtra)
 library(stringr)
+library(writexl)
+library(lubridate)
+
+# Onedrive
+parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
+
+ready_check_child <- c("Ready-to-check Observer Excel Files")
+criterion_child <- c("Criterion Video Files")
+
+setwd(parent_folder)
+
+# Check if master file exists
+training_file_name <- "annotation_training_stats.xlsx"
+
+# Check if the file exists in the current working directory
+if (file.exists(training_file_name)) {
+  training_excel <- read_excel(training_file_name)
+} else {
+  training_excel <- data.frame(Initials = NA, Date = NA, Trained_on_video = NA,
+                               Training_num = NA, Attempt_num = NA, Retest = NA,
+                               Beh_agreement = NA, Mod_agreement = NA)
+}
+
 
 # SEC 2: Choose files ----
 setwd(paste(parent_folder, ready_check_child, sep=""))
@@ -35,6 +50,15 @@ initials <- str_extract(pattern, "[A-Z]{2,3}")
 vid_num <- str_extract(pattern, "training_\\d+")
 
 attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+
+retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
+
+trained_on_vid_yn <- dlg_input(message = "Was this person trained on the new online training presentation (Started Spring 2025)? yes/no",
+                               default = "yes")$res
+
+
+creation_date <- file.info(comp_name)$mtime
+creation_date <- force_tz(creation_date, tzone = "UTC")
 
 # If above didn't work, choose manually
 if(initials %in% NA){
@@ -52,8 +76,8 @@ criterion <- read_excel(paste(crit_path,crit_name, sep = "/"))
 
 # SEC 3: For modifiers, manually tell which behaviors do not have modifiers ----
 behaviors_no_mod <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
-  "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
-  "Treadmill Walking at slower pace than normal", "Walking Around Room", "Off Camera")
+                      "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
+                      "Treadmill Walking at slower pace than normal", "Walking Around Room", "Off Camera")
 
 fill_blank_mod <- function(behaviors_no_mod, values_to_check, replace_values) {
   # Find the indices where values_to_check match behaviors_no_mod
@@ -212,6 +236,7 @@ for(i in rows_to_snag){
 percent_agreement_m <- format(mean(new_df_m$mod_1 == new_df_m$mod_2, na.rm = TRUE) * 100, digits = 3, nsmall = 1)
 print(percent_agreement_m)
 
+#calculate_training_ICC(new_df$behavior_1, new_df$behavior_2)
 
 # Plotting ----
 
@@ -248,3 +273,34 @@ combined_plot <- grid.arrange(b_plot, m_plot, top = paste(vid_num, ": ", did_pas
 # Saving plot
 plot_path <- paste(parent_folder, "Training Graphs", sep="")
 ggsave(paste(plot_path, "/", initials, "_", vid_num, "_", attempt_num, "_plot.png", sep=""), plot = combined_plot, width = 20, height = 10, dpi = 300)
+
+# Save data
+setwd(parent_folder)
+if (file.exists(training_file_name)) {
+  # Add a row and fill with data
+  row_num <- nrow(training_excel)+1
+  training_excel[row_num,] <- NA
+  
+  training_excel$Initials[row_num] <- initials
+  training_excel$Date[row_num] <- creation_date
+  training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
+  training_excel$Training_num[row_num] <- vid_num
+  training_excel$Attempt_num[row_num] <- attempt_num
+  training_excel$Retest[row_num] <- retest_yn
+  training_excel$Beh_agreement[row_num] <- percent_agreement_b
+  training_excel$Mod_agreement[row_num] <- percent_agreement_m
+  
+  write_xlsx(training_excel, "annotation_training_stats.xlsx")
+  
+} else {
+  training_excel$Initials <- initials
+  training_excel$Date <- creation_date
+  training_excel$Trained_on_video <- trained_on_vid_yn
+  training_excel$Training_num <- vid_num
+  training_excel$Attempt_num <- attempt_num
+  training_excel$Retest <- retest_yn
+  training_excel$Beh_agreement <- percent_agreement_b
+  training_excel$Mod_agreement <- percent_agreement_m
+  
+  #write_xlsx(training_excel, "annotation_training_stats.xlsx")
+}
