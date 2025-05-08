@@ -24,7 +24,7 @@ source("training_video_comparison_functions.R")
 parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
 
 ready_check_child <- c("Ready-to-check Observer Excel Files")
-criterion_child <- c("Criterion Video Files")
+criterion_child <- c("GyroS2 Free-living Criterion Files")
 
 setwd(parent_folder)
 
@@ -47,17 +47,12 @@ dlg_message("Select the desired training video (must be an excel file with one s
 comp_name <- file.choose()
 compare_frame <- read_excel(comp_name)
 
-pattern <- str_extract(comp_name, "[A-Z]{2,3} - [tT]raining_\\d+")
+pattern <- str_extract(comp_name, "[A-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
 initials <- str_extract(pattern, "[A-Z]{2,3}")
-vid_num <- str_extract(pattern, "[tT]raining_\\d+")
-
-attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
+attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
 
 retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
-
-trained_on_vid_yn <- dlg_input(message = "Was this person trained on the new online training presentation (Started Spring 2025)? yes/no",
-                               default = "yes")$res
-
 
 creation_date <- file.info(comp_name)$mtime
 creation_date <- force_tz(creation_date, tzone = "UTC")
@@ -69,6 +64,9 @@ if(initials %in% NA){
 if(vid_num %in% NA){
   vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
 }
+if(attempt_num %in% NA){
+  attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+}
 
 # Select criterion file
 crit_path <- paste(parent_folder, criterion_child, sep="")
@@ -76,8 +74,26 @@ crit_files <- list.files(crit_path)
 crit_name <- crit_files[grep(vid_num, crit_files)]
 criterion_frame <- read_excel(paste(crit_path,crit_name, sep = "/"))
 
-beh_plot <- plot_comparison(criterion_data = criterion_frame, comparison_data = compare_frame, input_column = "Behavior")
-mod1_plot <- plot_comparison(criterion_data = criterion_frame, comparison_data = compare_frame, input_column = "Modifier_1")
+beh_plot <- plot_comparison(criterion_data = criterion_frame,
+                            comparison_data = compare_frame,
+                            input_column = "Behavior")
+
+modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", colnames(criterion_frame))]
+
+if(length(modifier_cols) > 0){
+  
+  mod_plots <- list()
+  for(i in 1:length(modifier_cols)){
+    
+    mod_plots[[i]] <- plot_comparison(criterion_data = criterion_frame,
+                                 comparison_data = compare_frame,
+                                 input_column = modifier_cols[1])
+    
+  }
+  
+  grid.arrange(grobs = mod_plots, ncol = 2)
+  
+}
 
 
 
