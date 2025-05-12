@@ -21,32 +21,36 @@ library(lubridate)
 source("training_video_comparison_functions.R")
 
 # Onedrive
-parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
+#parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
 
-ready_check_child <- c("Ready-to-check Observer Excel Files")
-criterion_child <- c("GyroS2 Free-living Criterion Files")
+ready_check_child <- c("Input Observer Files")
+criterion_child <- c("Input Criterion Files")
 
-setwd(parent_folder)
+#setwd(parent_folder)
 
 # Check if master file exists
-training_file_name <- "annotation_training_stats.xlsx"
+training_file_name <- "Output Annotation Stats/annotation_training_stats.xlsx"
 
 # Check if the file exists in the current working directory
 if (file.exists(training_file_name)) {
   training_excel <- read_excel(training_file_name)
 } else {
   training_excel <- data.frame(Initials = NA, Date = NA, Trained_on_video = NA,
-                               Training_num = NA, Attempt_num = NA, Retest = NA,
-                               Beh_agreement = NA, Mod_agreement = NA)
+                               Dataset = NA, Training_num = NA, Attempt_num = NA,
+                               Retest = NA, Beh_agreement = NA, Mod_agreement = NA)
 }
 
 
 # SEC 2: Choose files ----
-setwd(paste(parent_folder, ready_check_child, sep=""))
+#setwd(paste(ready_check_child, sep=""))
 dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
 comp_name <- file.choose()
 compare_frame <- read_excel(comp_name)
 
+cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
+comp_name <- gsub("\\\\", "/", comp_name)
+comp_name <- gsub(cur_folder_path, "", comp_name)
+study_name <- gsub(" -.*", "", comp_name)
 pattern <- str_extract(comp_name, "[A-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
 initials <- str_extract(pattern, "[A-Z]{2,3}")
 vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
@@ -66,6 +70,9 @@ if(vid_num %in% NA){
 }
 if(attempt_num %in% NA){
   attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+}
+if(study_name %in% NA){
+  study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
 }
 
 # Select criterion file
@@ -321,6 +328,7 @@ if (file.exists(training_file_name)) {
   training_excel$Initials[row_num] <- initials
   training_excel$Date[row_num] <- creation_date
   training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
+  training_excel$Dataset[row_num] <- study_name
   training_excel$Training_num[row_num] <- vid_num
   training_excel$Attempt_num[row_num] <- attempt_num
   training_excel$Retest[row_num] <- retest_yn
