@@ -8,24 +8,7 @@ rm(list = ls())
 
 # Step 1: Setup
 
-  library(readxl)
-  library(dplyr)
-  library(ggplot2)
-  library(tidyr)
-  library(svDialogs)
-  library(gridExtra)
-  library(stringr)
-  library(writexl)
-  library(lubridate)
-  library(purrr)
-  
   source("training_video_comparison_functions.R")
-  
-  # Onedrive
-  #parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
-  
-  #ready_check_child <- c("Input Observer Files")
-  criterion_child <- c("Input Criterion Files")
   
   # Check if master file exists
   training_file_name <- "Output Annotation Stats/annotation_training_stats.xlsx"
@@ -34,341 +17,85 @@ rm(list = ls())
   if (file.exists(training_file_name)) {
     training_excel <- read_excel(training_file_name)
   } else {
-    training_excel <- data.frame(Initials = NA, Date = NA, Trained_on_video = NA,
-                                 Dataset = NA, Training_num = NA, Attempt_num = NA,
-                                 Retest = NA, Beh_agreement = NA, Mod_agreement = NA)
+    training_excel <- data.frame(Initials = NA, Date = NA,
+                                 trained_on_vid_yn = NA, Dataset = NA, 
+                                 Training_num = NA, Attempt_num = NA,
+                                 Retest = NA, Beh_agreement = NA, 
+                                 Mod_agreement = NA)
   }
 
+  trained_on_vid_yn <- "yes" # All videos going forward on trained on video
 
+# ------------------------------------------------------------------------------
 # Step 2: Choose files
 
   obs_list <- get_obs_file()
   criterion_frame <- get_crit_file(vid_num = obs_list$vid_num)
-  
-# Step 3: Plot behavior
-  beh_plot <- plot_comparison(criterion_frame = criterion_frame,
-                              comparison_list = obs_list,
-                              input_column = "Behavior")
 
-# Step 4: Plot modifiers
+  
+# ------------------------------------------------------------------------------
+# Step 3: Make plots
 
   # Get modifiers
-  modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", colnames(criterion_frame))]
+  modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", 
+                                                   colnames(criterion_frame))]
   
+  # Add behavior to list of modifier column names for plotting
   plot_cols <- append(modifier_cols, "Behavior", after = 0)
+  rm(modifier_cols)
   
-    
+  # Plotting over list of column names
   my_plots <- purrr::map(plot_cols,
               ~ plot_comparison(criterion_frame = criterion_frame,
                                              comparison_list = obs_list,
                                              input_column = .x)
-  )
-    
-  grid.arrange(grobs = my_plots, ncol = 2)
-    
-
-#setwd(paste(ready_check_child, sep=""))
-# dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
-# comp_name <- file.choose()
-# compare_frame <- read_excel(comp_name)
-# 
-# cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
-# comp_name <- gsub("\\\\", "/", comp_name)
-# comp_name <- gsub(cur_folder_path, "", comp_name)
-# study_name <- gsub(" -.*", "", comp_name)
-# pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
-# initials <- str_extract(pattern, "[a-zA-Z]{2,3}")
-# vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
-# attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
-# 
-# retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
-# 
-# creation_date <- file.info(comp_name)$mtime
-# creation_date <- force_tz(creation_date, tzone = "UTC")
-# 
-# # If above didn't work, choose manually
-# if(initials %in% NA){
-#   initials <- dlg_input(message = "Enter initials of coder. (ex: NR)")$res
-# }
-# if(vid_num %in% NA){
-#   vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
-# }
-# if(attempt_num %in% NA){
-#   attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
-# }
-# if(study_name %in% NA){
-#   study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
-# }
-
-# # Select criterion file
-# crit_path <- paste(criterion_child, sep="")
-# crit_files <- list.files(crit_path)
-# crit_name <- crit_files[grep(obs_list$vid_num, crit_files)]
-# criterion_frame <- read_excel(paste(crit_path, crit_name, sep = "/"))
-
-
-
-
-
-if(length(modifier_cols) > 0){
+  ) # End map()
   
-  mod_plots <- list()
-  for(i in 1:length(modifier_cols)){
+  # Put all plots together
+  all_plots <- grid.arrange(grobs = my_plots, ncol = 2)
     
-    mod_plots[[i]] <- plot_comparison(criterion_data = criterion_frame,
-                                 comparison_data = compare_frame,
-                                 input_column = modifier_cols[1])
+
+# ------------------------------------------------------------------------------  
+# Step 4: Save plot
+  num_rows <- ceiling(length(plot_cols)/2) # For flexible plot height
+  
+  plot_path <- choose.dir()
+  ggsave(paste(plot_path, "/",
+               obs_list$initials, "_",
+               obs_list$vid_num, "_",
+               obs_list$attempt_num, "_plot.png",
+               sep=""),
+         plot = all_plots, width = 24, height = 5*num_rows, dpi = 300)
+
+  
+# ------------------------------------------------------------------------------
+# Step 5: Save data
+  if (file.exists(training_file_name)) {
+    # Add a row and fill with data
+    row_num <- nrow(training_excel)+1
+    training_excel[row_num,] <- NA
     
+    training_excel$Initials[row_num] <- obs_list$initials
+    training_excel$Date[row_num] <- obs_list$creation_date
+    training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
+    training_excel$Dataset[row_num] <- obs_list$study_name
+    training_excel$Training_num[row_num] <- obs_list$vid_num
+    training_excel$Attempt_num[row_num] <- obs_list$attempt_num
+    training_excel$Retest[row_num] <- obs_list$retest_yn
+    training_excel$Beh_agreement[row_num] <- percent_agreement_b
+    training_excel$Mod_agreement[row_num] <- percent_agreement_m
+    
+    write_xlsx(training_excel, "annotation_training_stats.xlsx")
+    
+  } else {
+    training_excel$Initials <- obs_list$initials
+    training_excel$Date <- obs_list$creation_date
+    training_excel$Trained_on_video <- trained_on_vid_yn
+    training_excel$Training_num <- obs_list$vid_num
+    training_excel$Attempt_num <- obs_list$attempt_num
+    training_excel$Retest <- obs_list$retest_yn
+    training_excel$Beh_agreement <- percent_agreement_b
+    training_excel$Mod_agreement <- percent_agreement_m
+    
+    #write_xlsx(training_excel, "annotation_training_stats.xlsx")
   }
-  
-  grid.arrange(grobs = mod_plots, ncol = 2)
-  
-}
-
-
-
-
-
-
-
-
-# SEC 3: For modifiers, manually tell which behaviors do not have modifiers ----
-behaviors_no_mod <- c("Treadmill Running at slower pace than normal", "Treadmill Running at faster pace than normal",
-                      "Treadmill Walking at faster pace than normal", "Treadmill Walking at normal walking pace",
-                      "Treadmill Walking at slower pace than normal", "Walking Around Room", "Off Camera")
-
-fill_blank_mod <- function(behaviors_no_mod, values_to_check, replace_values) {
-  # Find the indices where values_to_check match behaviors_no_mod
-  indices_to_replace <- which(values_to_check %in% behaviors_no_mod)
-  
-  # Replace corresponding elements with "no modifier"
-  replace_values[indices_to_replace] <- "no modifier"
-  
-  return(replace_values)
-}
-
-
-
-# SEC 4: Set up data frames ----
-
-# Set up behavior data frames
-criterion_b <- criterion %>% select(Time_Relative_sf, Behavior)
-compare_b <- compare %>% select(Time_Relative_sf, Behavior)
-
-# Set up modifier data frames
-criterion_m <- criterion %>% select(Time_Relative_sf, Modifier_1)
-compare_m <- compare %>% select(Time_Relative_sf, Modifier_1)
-
-# Fill in blank modifiers to separate from true NAs
-compare_m$Modifier_1 <- fill_blank_mod(behaviors_no_mod, compare_b$Behavior, compare_m$Modifier_1)
-criterion_m$Modifier_1 <- fill_blank_mod(behaviors_no_mod, criterion_b$Behavior, criterion_m$Modifier_1)
-
-# Remove rows with NA
-compare_b <- na.omit(compare_b)
-compare_m <- na.omit(compare_m)
-
-# Saving order of variables to correct order later
-criterion_b_order <- criterion_b$Behavior
-compare_b_order <- compare_b$Behavior
-
-criterion_m_order <- criterion_m$Modifier_1
-compare_m_order <- compare_m$Modifier_1
-
-
-
-# SEC 5: Make behavior and modifier frames tall ----
-
-# Error occurred when running YP_training_5_2, run code below INSTEAD of SEC 5-7
-# Merging data frames redundant/unnecessary for this code- consider removing
-
-tall_data_b_crit <- data.frame(Time_Relative_sf = criterion_b$Time_Relative_sf,
-                               source = rep("Behavior_criterion", nrow(criterion_b)),
-                               behavior = criterion_b$Behavior)
-
-tall_data_m_crit <- data.frame(Time_Relative_sf = criterion_m$Time_Relative_sf,
-                               source = rep("Modifier_1_criterion", nrow(criterion_m)),
-                               modifier = criterion_m$Modifier_1)
-
-tall_data_b_comp <- data.frame(Time_Relative_sf = compare_b$Time_Relative_sf,
-                               source = rep("Behavior_compare", nrow(compare_b)),
-                               behavior = compare_b$Behavior)
-
-tall_data_m_comp <- data.frame(Time_Relative_sf = compare_m$Time_Relative_sf,
-                               source = rep("Modifier_1_compare", nrow(compare_m)),
-                               modifier = compare_m$Modifier_1)
-
-
-# Percent Agreement behavior ----
-
-# Behaviors
-# Find the maximum time in each dataset
-max_time <- max(max(tall_data_b_crit$Time_Relative_sf, na.rm = TRUE), max(tall_data_b_comp$Time_Relative_sf, na.rm = TRUE))
-
-# Create a sequence of time from 0 to the maximum time in milliseconds
-time_sequence <- seq(0, max_time, by = 0.001)
-
-# Create a dataframe with the time column
-new_df <- data.frame(Time_Relative_sf = time_sequence)
-
-# Add columns for behavior_1 and behavior_2
-new_df$behavior_1 <- NA
-new_df$behavior_2 <- NA
-
-# Add start_stop column to tall_data_b_crit and tall_data_b_comp
-tall_data_b_crit$start_stop <- rep(c("start", "stop"), length.out = nrow(tall_data_b_crit))
-tall_data_b_comp$start_stop <- rep(c("start", "stop"), length.out = nrow(tall_data_b_comp))
-
-# Fill in new_df$behavior_1
-tall_data_b_crit$Time_Relative_sf <- as.numeric(format(tall_data_b_crit$Time_Relative_sf, digits = 3, nsmall = 3))
-new_df$Time_Relative_sf <- as.numeric(format(new_df$Time_Relative_sf, nsmall = 3))
-
-rows_to_snag <- seq(from = 1, to = nrow(tall_data_b_crit), by = 2)
-for(i in rows_to_snag){
-  start_row <- which(new_df$Time_Relative_sf %in% tall_data_b_crit$Time_Relative_sf[i])
-  end_row <- which(new_df$Time_Relative_sf %in% tall_data_b_crit$Time_Relative_sf[i+1])-1
-  behavior <- tall_data_b_crit$behavior[i]
-  new_df$behavior_1[start_row:end_row] <- behavior
-}
-
-
-# Fill in new_df$behavior_2
-tall_data_b_comp$Time_Relative_sf <- as.numeric(format(tall_data_b_comp$Time_Relative_sf, digits = 3, nsmall = 3))
-
-rows_to_snag <- seq(from = 1, to = nrow(tall_data_b_comp), by = 2)
-for(i in rows_to_snag){
-  start_row <- which(new_df$Time_Relative_sf %in% tall_data_b_comp$Time_Relative_sf[i])
-  end_row <- which(new_df$Time_Relative_sf %in% tall_data_b_comp$Time_Relative_sf[i+1])-1
-  behavior <- tall_data_b_comp$behavior[i]
-  new_df$behavior_2[start_row:end_row] <- behavior
-}
-
-
-percent_agreement_b <- format(mean(new_df$behavior_1 == new_df$behavior_2, na.rm = TRUE) * 100, digits = 3, nsmall = 1)
-print(percent_agreement_b)
-
-# Percent Agreement Modifier ----
-
-# Modifier
-# Find the maximum time in each dataset
-max_time <- max(max(tall_data_m_crit$Time_Relative_sf, na.rm = TRUE), max(tall_data_m_comp$Time_Relative_sf, na.rm = TRUE))
-
-# Create a sequence of time from 0 to the maximum time in milliseconds
-time_sequence <- seq(0, max_time, by = 0.001)
-
-# Create a dataframe with the time column
-new_df_m <- data.frame(Time_Relative_sf = time_sequence)
-
-# Add columns for behavior_1 and behavior_2
-new_df_m$mod_1 <- NA
-new_df_m$mod_2 <- NA
-
-# Add start_stop column to tall_data_b_crit and tall_data_b_comp
-tall_data_m_crit$start_stop <- rep(c("start", "stop"), length.out = nrow(tall_data_m_crit))
-tall_data_m_comp$start_stop <- rep(c("start", "stop"), length.out = nrow(tall_data_m_comp))
-
-# Fill in new_df_m$mod_1
-tall_data_m_crit$Time_Relative_sf <- as.numeric(format(tall_data_m_crit$Time_Relative_sf, digits = 3, nsmall = 3))
-new_df_m$Time_Relative_sf <- as.numeric(format(new_df_m$Time_Relative_sf, nsmall = 3))
-
-rows_to_snag <- seq(from = 1, to = nrow(tall_data_m_crit), by = 2)
-for(i in rows_to_snag){
-  start_row <- which(new_df_m$Time_Relative_sf %in% tall_data_m_crit$Time_Relative_sf[i])
-  end_row <- which(new_df_m$Time_Relative_sf %in% tall_data_m_crit$Time_Relative_sf[i+1])-1
-  mod <- tall_data_m_crit$modifier[i]
-  new_df_m$mod_1[start_row:end_row] <- mod
-}
-
-
-# Fill in new_df_m$mod_2
-tall_data_m_comp$Time_Relative_sf <- as.numeric(format(tall_data_m_comp$Time_Relative_sf, digits = 3, nsmall = 3))
-
-rows_to_snag <- seq(from = 1, to = nrow(tall_data_m_comp), by = 2)
-for(i in rows_to_snag){
-  start_row <- which(new_df_m$Time_Relative_sf %in% tall_data_m_comp$Time_Relative_sf[i])
-  end_row <- which(new_df_m$Time_Relative_sf %in% tall_data_m_comp$Time_Relative_sf[i+1])-1
-  mod <- tall_data_m_comp$modifier[i]
-  new_df_m$mod_2[start_row:end_row] <- mod
-}
-
-
-percent_agreement_m <- format(mean(new_df_m$mod_1 == new_df_m$mod_2, na.rm = TRUE) * 100, digits = 3, nsmall = 1)
-print(percent_agreement_m)
-
-#calculate_training_ICC(new_df$behavior_1, new_df$behavior_2)
-
-# Plotting ----
-
-# Behavior plot
-b_plot <- ggplot() +
-  geom_path(data = tall_data_b_crit, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Criterion")) +
-  geom_path(data = tall_data_b_comp, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Your coding")) +
-  theme_minimal() +
-  labs(x = "Relative Time (s)", y = "Behavior", title = paste("Behavior Comparison % agreement: ", percent_agreement_b, "%",sep="")) +
-  theme(legend.position = "none") +
-  scale_x_continuous(breaks = seq(0, ceiling(max_time), by = 60))
-
-# Modifier plot
-m_plot <- ggplot() +
-  geom_path(data = tall_data_m_crit, aes(x = Time_Relative_sf, y = modifier, group = 1, color = "Criterion")) +
-  geom_path(data = tall_data_m_comp, aes(x = Time_Relative_sf, y = modifier, group = 1, color = "Your coding")) +
-  theme_minimal() +
-  labs(x = "Relative Time (s)", y = "Modifier", title = paste("Modifier Comparison % agreement: ", percent_agreement_m, "%",sep="")) +
-  theme(legend.position = "bottom") +
-  scale_x_continuous(breaks = seq(0, ceiling(max_time), by = 60))
-
-percent_agreement_b <- as.numeric(percent_agreement_b)
-percent_agreement_m <- as.numeric(percent_agreement_m)
-
-if(percent_agreement_b < 90.0 | percent_agreement_m < 90.0){
-  did_pass <- c("At least one of the agreement values is below 90%, please recode")
-}else{
-  did_pass <- c("Both agreements at or above 90%, passed")
-}
-
-# Putting plots together
-combined_plot <- grid.arrange(b_plot, m_plot, top = paste(vid_num, ": ", did_pass, sep=""))
-
-
-
-
-
-
-
-
-
-
-# Saving plot
-plot_path <- paste(parent_folder, "Training Graphs", sep="")
-ggsave(paste(plot_path, "/", initials, "_", vid_num, "_", attempt_num, "_plot.png", sep=""), plot = combined_plot, width = 20, height = 10, dpi = 300)
-
-# Save data
-setwd(parent_folder)
-if (file.exists(training_file_name)) {
-  # Add a row and fill with data
-  row_num <- nrow(training_excel)+1
-  training_excel[row_num,] <- NA
-  
-  training_excel$Initials[row_num] <- obs_list$initials
-  training_excel$Date[row_num] <- obs_list$creation_date
-  #training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
-  training_excel$Dataset[row_num] <- obs_list$study_name
-  training_excel$Training_num[row_num] <- obs_list$vid_num
-  training_excel$Attempt_num[row_num] <- obs_list$attempt_num
-  training_excel$Retest[row_num] <- obs_list$retest_yn
-  training_excel$Beh_agreement[row_num] <- percent_agreement_b
-  training_excel$Mod_agreement[row_num] <- percent_agreement_m
-  
-  write_xlsx(training_excel, "annotation_training_stats.xlsx")
-  
-} else {
-  training_excel$Initials <- obs_list$initials
-  training_excel$Date <- obs_list$creation_date
-  #training_excel$Trained_on_video <- trained_on_vid_yn
-  training_excel$Training_num <- obs_list$vid_num
-  training_excel$Attempt_num <- obs_list$attempt_num
-  training_excel$Retest <- obs_list$retest_yn
-  training_excel$Beh_agreement <- percent_agreement_b
-  training_excel$Mod_agreement <- percent_agreement_m
-  
-  #write_xlsx(training_excel, "annotation_training_stats.xlsx")
-}

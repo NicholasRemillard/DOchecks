@@ -1,5 +1,16 @@
 # Functions for use in training_video_comparison_script.R
 
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(svDialogs)
+library(gridExtra)
+library(stringr)
+library(writexl)
+library(lubridate)
+library(purrr)
+
 get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
   
   if(is.null(file_path)){
