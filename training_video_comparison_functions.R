@@ -67,6 +67,7 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
 get_crit_file <- function(file_path = NULL, vid_num){
   
   if(is.null(file_path)){
+    dlg_message("Select the folder containing the criterion videos.")
     file_path <- choose.dir()
   }
   

@@ -30,7 +30,8 @@ rm(list = ls())
 # Step 2: Choose files
 
   obs_list <- get_obs_file()
-  criterion_frame <- get_crit_file(vid_num = obs_list$vid_num)
+  criterion_frame <- get_crit_file(file_path = "Input Criterion Files/",
+                                   vid_num = obs_list$vid_num)
 
   
 # ------------------------------------------------------------------------------
@@ -59,7 +60,7 @@ rm(list = ls())
 # Step 4: Save plot
   num_rows <- ceiling(length(plot_cols)/2) # For flexible plot height
   
-  plot_path <- choose.dir()
+  plot_path <- "Output Graphs"
   ggsave(paste(plot_path, "/",
                obs_list$initials, "_",
                obs_list$vid_num, "_",
