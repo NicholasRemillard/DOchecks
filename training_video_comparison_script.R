@@ -6,42 +6,66 @@
 
 rm(list = ls())
 
-# SEC 1: Load necessary packages and master file----
+# Step 1: Setup
 
-library(readxl)
-library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(svDialogs)
-library(gridExtra)
-library(stringr)
-library(writexl)
-library(lubridate)
+  library(readxl)
+  library(dplyr)
+  library(ggplot2)
+  library(tidyr)
+  library(svDialogs)
+  library(gridExtra)
+  library(stringr)
+  library(writexl)
+  library(lubridate)
+  library(purrr)
+  
+  source("training_video_comparison_functions.R")
+  
+  # Onedrive
+  #parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
+  
+  #ready_check_child <- c("Input Observer Files")
+  criterion_child <- c("Input Criterion Files")
+  
+  # Check if master file exists
+  training_file_name <- "Output Annotation Stats/annotation_training_stats.xlsx"
+  
+  # Check if the file exists in the current working directory
+  if (file.exists(training_file_name)) {
+    training_excel <- read_excel(training_file_name)
+  } else {
+    training_excel <- data.frame(Initials = NA, Date = NA, Trained_on_video = NA,
+                                 Dataset = NA, Training_num = NA, Attempt_num = NA,
+                                 Retest = NA, Beh_agreement = NA, Mod_agreement = NA)
+  }
 
-source("training_video_comparison_functions.R")
 
-# Onedrive
-#parent_folder <- c("C:/Users/nickr/OneDrive - University of Tennessee/PAAL Undergrad Docs/02 DO Coding/02 DO Training Files/")
+# Step 2: Choose files
 
-ready_check_child <- c("Input Observer Files")
-criterion_child <- c("Input Criterion Files")
+  obs_list <- get_obs_file()
+  criterion_frame <- get_crit_file(vid_num = obs_list$vid_num)
+  
+# Step 3: Plot behavior
+  beh_plot <- plot_comparison(criterion_frame = criterion_frame,
+                              comparison_list = obs_list,
+                              input_column = "Behavior")
 
-# Check if master file exists
-training_file_name <- "Output Annotation Stats/annotation_training_stats.xlsx"
+# Step 4: Plot modifiers
 
-# Check if the file exists in the current working directory
-if (file.exists(training_file_name)) {
-  training_excel <- read_excel(training_file_name)
-} else {
-  training_excel <- data.frame(Initials = NA, Date = NA, Trained_on_video = NA,
-                               Dataset = NA, Training_num = NA, Attempt_num = NA,
-                               Retest = NA, Beh_agreement = NA, Mod_agreement = NA)
-}
-
-
-# SEC 2: Choose files ----
-
-obs_list <- get_obs_file()
+  # Get modifiers
+  modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", colnames(criterion_frame))]
+  
+  plot_cols <- append(modifier_cols, "Behavior", after = 0)
+  
+    
+  my_plots <- purrr::map(plot_cols,
+              ~ plot_comparison(criterion_frame = criterion_frame,
+                                             comparison_list = obs_list,
+                                             input_column = .x)
+  )
+    
+  grid.arrange(grobs = my_plots, ncol = 2)
+    
 
 #setwd(paste(ready_check_child, sep=""))
 # dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
@@ -76,17 +100,15 @@ obs_list <- get_obs_file()
 #   study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
 # }
 
-# Select criterion file
-crit_path <- paste(criterion_child, sep="")
-crit_files <- list.files(crit_path)
-crit_name <- crit_files[grep(obs_list$vid_num, crit_files)]
-criterion_frame <- read_excel(paste(crit_path, crit_name, sep = "/"))
+# # Select criterion file
+# crit_path <- paste(criterion_child, sep="")
+# crit_files <- list.files(crit_path)
+# crit_name <- crit_files[grep(obs_list$vid_num, crit_files)]
+# criterion_frame <- read_excel(paste(crit_path, crit_name, sep = "/"))
 
-beh_plot <- plot_comparison(criterion_data = criterion_frame,
-                            comparison_data = obs_list$compare_frame,
-                            input_column = "Behavior")
 
-modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", colnames(criterion_frame))]
+
+
 
 if(length(modifier_cols) > 0){
   

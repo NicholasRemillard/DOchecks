@@ -53,10 +53,23 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
   
 }
 
-plot_comparison <- function(criterion_data, comparison_data, input_column) {
+get_crit_file <- function(file_path = NULL, vid_num){
   
-  criterion <- criterion_data %>% select(Time_Relative_sf, !!sym(input_column))
-  compare <- comparison_data %>% select(Time_Relative_sf, !!sym(input_column))
+  if(is.null(file_path)){
+    file_path <- choose.dir()
+  }
+  
+  crit_files <- list.files(file_path)
+  crit_name <- crit_files[grep(vid_num, crit_files)]
+  criterion_frame <- read_excel(paste(file_path, crit_name, sep = "/"))
+  
+  return(criterion_frame)
+}
+
+plot_comparison <- function(criterion_frame, comparison_list, input_column) {
+  
+  criterion <- criterion_frame %>% select(Time_Relative_sf, !!sym(input_column))
+  compare <- comparison_list$compare_frame %>% select(Time_Relative_sf, !!sym(input_column))
   
   criterion[[input_column]][is.na(criterion[[input_column]])] <- "ZZ_No value"
   compare[[input_column]][is.na(compare[[input_column]])] <- "ZZ_No value"
@@ -130,7 +143,7 @@ plot_comparison <- function(criterion_data, comparison_data, input_column) {
   }
   
   # Putting plots together
-  combined_plot <- grid.arrange(my_plot, top = paste(vid_num, ": ", did_pass, sep=""))
+  combined_plot <- grid.arrange(my_plot, top = paste(comparison_list$vid_num, ": ", did_pass, sep=""))
   
   return(combined_plot)
   
