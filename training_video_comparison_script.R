@@ -326,25 +326,25 @@ if (file.exists(training_file_name)) {
   row_num <- nrow(training_excel)+1
   training_excel[row_num,] <- NA
   
-  training_excel$Initials[row_num] <- initials
-  training_excel$Date[row_num] <- creation_date
-  training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
-  training_excel$Dataset[row_num] <- study_name
-  training_excel$Training_num[row_num] <- vid_num
-  training_excel$Attempt_num[row_num] <- attempt_num
-  training_excel$Retest[row_num] <- retest_yn
+  training_excel$Initials[row_num] <- obs_list$initials
+  training_excel$Date[row_num] <- obs_list$creation_date
+  #training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
+  training_excel$Dataset[row_num] <- obs_list$study_name
+  training_excel$Training_num[row_num] <- obs_list$vid_num
+  training_excel$Attempt_num[row_num] <- obs_list$attempt_num
+  training_excel$Retest[row_num] <- obs_list$retest_yn
   training_excel$Beh_agreement[row_num] <- percent_agreement_b
   training_excel$Mod_agreement[row_num] <- percent_agreement_m
   
   write_xlsx(training_excel, "annotation_training_stats.xlsx")
   
 } else {
-  training_excel$Initials <- initials
-  training_excel$Date <- creation_date
-  training_excel$Trained_on_video <- trained_on_vid_yn
-  training_excel$Training_num <- vid_num
-  training_excel$Attempt_num <- attempt_num
-  training_excel$Retest <- retest_yn
+  training_excel$Initials <- obs_list$initials
+  training_excel$Date <- obs_list$creation_date
+  #training_excel$Trained_on_video <- trained_on_vid_yn
+  training_excel$Training_num <- obs_list$vid_num
+  training_excel$Attempt_num <- obs_list$attempt_num
+  training_excel$Retest <- obs_list$retest_yn
   training_excel$Beh_agreement <- percent_agreement_b
   training_excel$Mod_agreement <- percent_agreement_m
   
