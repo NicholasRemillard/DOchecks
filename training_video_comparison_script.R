@@ -26,8 +26,6 @@ source("training_video_comparison_functions.R")
 ready_check_child <- c("Input Observer Files")
 criterion_child <- c("Input Criterion Files")
 
-#setwd(parent_folder)
-
 # Check if master file exists
 training_file_name <- "Output Annotation Stats/annotation_training_stats.xlsx"
 
@@ -42,47 +40,50 @@ if (file.exists(training_file_name)) {
 
 
 # SEC 2: Choose files ----
+
+obs_list <- get_obs_file()
+
 #setwd(paste(ready_check_child, sep=""))
-dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
-comp_name <- file.choose()
-compare_frame <- read_excel(comp_name)
-
-cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
-comp_name <- gsub("\\\\", "/", comp_name)
-comp_name <- gsub(cur_folder_path, "", comp_name)
-study_name <- gsub(" -.*", "", comp_name)
-pattern <- str_extract(comp_name, "[A-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
-initials <- str_extract(pattern, "[A-Z]{2,3}")
-vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
-attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
-
-retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
-
-creation_date <- file.info(comp_name)$mtime
-creation_date <- force_tz(creation_date, tzone = "UTC")
-
-# If above didn't work, choose manually
-if(initials %in% NA){
-  initials <- dlg_input(message = "Enter initials of coder. (ex: NR)")$res
-}
-if(vid_num %in% NA){
-  vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
-}
-if(attempt_num %in% NA){
-  attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
-}
-if(study_name %in% NA){
-  study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
-}
+# dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
+# comp_name <- file.choose()
+# compare_frame <- read_excel(comp_name)
+# 
+# cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
+# comp_name <- gsub("\\\\", "/", comp_name)
+# comp_name <- gsub(cur_folder_path, "", comp_name)
+# study_name <- gsub(" -.*", "", comp_name)
+# pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
+# initials <- str_extract(pattern, "[a-zA-Z]{2,3}")
+# vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
+# attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
+# 
+# retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
+# 
+# creation_date <- file.info(comp_name)$mtime
+# creation_date <- force_tz(creation_date, tzone = "UTC")
+# 
+# # If above didn't work, choose manually
+# if(initials %in% NA){
+#   initials <- dlg_input(message = "Enter initials of coder. (ex: NR)")$res
+# }
+# if(vid_num %in% NA){
+#   vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
+# }
+# if(attempt_num %in% NA){
+#   attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+# }
+# if(study_name %in% NA){
+#   study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
+# }
 
 # Select criterion file
-crit_path <- paste(parent_folder, criterion_child, sep="")
+crit_path <- paste(criterion_child, sep="")
 crit_files <- list.files(crit_path)
-crit_name <- crit_files[grep(vid_num, crit_files)]
-criterion_frame <- read_excel(paste(crit_path,crit_name, sep = "/"))
+crit_name <- crit_files[grep(obs_list$vid_num, crit_files)]
+criterion_frame <- read_excel(paste(crit_path, crit_name, sep = "/"))
 
 beh_plot <- plot_comparison(criterion_data = criterion_frame,
-                            comparison_data = compare_frame,
+                            comparison_data = obs_list$compare_frame,
                             input_column = "Behavior")
 
 modifier_cols <- colnames(criterion_frame)[grepl("^Modifier_", colnames(criterion_frame))]

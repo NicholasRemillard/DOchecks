@@ -1,5 +1,58 @@
 # Functions for use in training_video_comparison_script.R
 
+get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
+  
+  if(is.null(file_path)){
+    dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
+    file_path <- file.choose()
+    
+  }
+  compare_frame <- read_excel(file_path)
+  
+  if(is.null(cur_folder_path)){
+    cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
+  }
+  
+  comp_name <- gsub("\\\\", "/", file_path)
+  comp_name <- gsub(cur_folder_path, "", comp_name)
+  study_name <- gsub(" -.*", "", comp_name)
+  pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
+  initials <- str_extract(pattern, "[a-zA-Z]{2,3}")
+  vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
+  attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
+  
+  retest_yn <- dlg_input(message = "Yes this a retest in a new semester? yes/no", default = "no")$res
+  
+  creation_date <- file.info(comp_name)$mtime
+  creation_date <- force_tz(creation_date, tzone = "UTC")
+  
+  # Handle missing data, if any
+  if(initials %in% NA){
+    initials <- dlg_input(message = "Enter initials of coder. (ex: NR)")$res
+  }
+  if(vid_num %in% NA){
+    vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
+  }
+  if(attempt_num %in% NA){
+    attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
+  }
+  if(study_name %in% NA){
+    study_name <- dlg_input(message = "Enter study name. (ex: GyroS2_Free-living)")$res
+  }
+  
+  # Return values
+  return(list(
+    compare_frame = compare_frame,
+    initials = initials,
+    vid_num = vid_num,
+    attempt_num = attempt_num,
+    study_name = study_name,
+    retest_yn = retest_yn,
+    creation_date = creation_date
+  ))
+  
+}
+
 plot_comparison <- function(criterion_data, comparison_data, input_column) {
   
   criterion <- criterion_data %>% select(Time_Relative_sf, !!sym(input_column))
