@@ -157,6 +157,8 @@ plot_comparison <- function(criterion_frame, comparison_list, input_column) {
   # Putting plots together
   combined_plot <- grid.arrange(my_plot, top = paste(comparison_list$vid_num, ": ", did_pass, sep=""))
   
-  return(combined_plot)
+  return(list(
+    combined_plot = combined_plot,
+    percent_agreement = percent_agreement))
   
 }

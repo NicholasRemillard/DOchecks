@@ -2,8 +2,6 @@
 # Created by Nick Remillard 2/8/2024
 # For DO Coding Training Purposes Only
 
-# Script last updated: 2/19/2025
-
 rm(list = ls())
 
 # Step 1: Setup
@@ -49,7 +47,7 @@ rm(list = ls())
   my_plots <- purrr::map(plot_cols,
               ~ plot_comparison(criterion_frame = criterion_frame,
                                              comparison_list = obs_list,
-                                             input_column = .x)
+                                             input_column = .x)$combined_plot
   ) # End map()
   
   # Put all plots together
@@ -71,6 +69,7 @@ rm(list = ls())
   
 # ------------------------------------------------------------------------------
 # Step 5: Save data
+  
   if (file.exists(training_file_name)) {
     # Add a row and fill with data
     row_num <- nrow(training_excel)+1
