@@ -16,6 +16,7 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
   if(is.null(file_path)){
     dlg_message("Select the desired training video (must be an excel file with one sheet) to compare to criterion.")
     file_path <- file.choose()
+    file_path <- gsub("\\\\", "/", file_path)
     
   }
   compare_frame <- read_excel(file_path)
@@ -24,8 +25,7 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
     cur_folder_path <- paste(getwd(), "/Input Observer Files/", sep="")
   }
   
-  comp_name <- gsub("\\\\", "/", file_path)
-  comp_name <- gsub(cur_folder_path, "", comp_name)
+  comp_name <- gsub(cur_folder_path, "", file_path)
   study_name <- gsub(" -.*", "", comp_name)
   #pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
   pattern <- str_extract(comp_name, "(?<=- ).*?(?= -)")
@@ -60,7 +60,8 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
     attempt_num = attempt_num,
     study_name = study_name,
     retest_yn = retest_yn,
-    creation_date = creation_date
+    creation_date = creation_date,
+    file_path = file_path
   ))
   
 }
@@ -161,5 +162,31 @@ plot_comparison <- function(criterion_frame, comparison_list, input_column) {
   return(list(
     combined_plot = combined_plot,
     percent_agreement = percent_agreement))
+  
+}
+
+move_file <- function(file_path, to_path = NULL){
+  if (is.null(to_path)) {
+    dir_path <- dirname(file_path)
+    file_name <- basename(file_path)
+    checked_dir <- file.path(dir_path, "Checked")
+    
+    # Create the "Checked" folder if it doesn't exist
+    if (!dir.exists(checked_dir)) {
+      dir.create(checked_dir)
+    }
+    
+    to_path <- file.path(checked_dir, file_name)
+  }
+  
+  success <- file.rename(file_path, to_path)
+  
+  if (success) {
+    message("File moved to: ", to_path)
+  } else {
+    warning("File could not be moved. Check if the file exists and you have permissions.")
+  }
+  
+  return(success)
   
 }

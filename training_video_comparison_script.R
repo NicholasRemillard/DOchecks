@@ -68,9 +68,17 @@ rm(list = ls())
 
   
 # ------------------------------------------------------------------------------
+# Step 6: Move file to 'Checked' folder
+  move_file(obs_list$file_path)
+  
+  
+# ------------------------------------------------------------------------------
 # Step 5: Save data
   
-  if (file.exists(training_file_name)) {
+  yes_save <-dlg_input(message = "Do you want to save this data? 
+                       Please enter 'yes' or 'no'.")$res
+  
+  if (file.exists(training_file_name) & yes_save == "yes") {
     # Add a row and fill with data
     row_num <- nrow(training_excel)+1
     training_excel[row_num,] <- NA
