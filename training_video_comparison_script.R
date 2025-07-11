@@ -95,15 +95,4 @@ rm(list = ls())
     
     write_xlsx(training_excel, "annotation_training_stats.xlsx")
     
-  } else if (!file.exists(training_file_name & yes_save == "yes")){
-    training_excel$Initials <- obs_list$initials
-    training_excel$Date <- obs_list$creation_date
-    training_excel$Trained_on_video <- trained_on_vid_yn
-    training_excel$Training_num <- obs_list$vid_num
-    training_excel$Attempt_num <- obs_list$attempt_num
-    training_excel$Retest <- obs_list$retest_yn
-    training_excel$Beh_agreement <- percent_agreement_b
-    training_excel$Mod_agreement <- percent_agreement_m
-    
-    #write_xlsx(training_excel, "annotation_training_stats.xlsx")
   }
