@@ -27,7 +27,8 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
   comp_name <- gsub("\\\\", "/", file_path)
   comp_name <- gsub(cur_folder_path, "", comp_name)
   study_name <- gsub(" -.*", "", comp_name)
-  pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
+  #pattern <- str_extract(comp_name, "[a-zA-Z]{2,3}_[tT]rainingvid\\d+_\\d+")
+  pattern <- str_extract(comp_name, "(?<=- ).*?(?= -)")
   initials <- str_extract(pattern, "[a-zA-Z]{2,3}")
   vid_num <- str_extract(pattern, "[tT]rainingvid\\d+")
   attempt_num <- gsub("_", "", str_extract(pattern, "_\\d+"))
@@ -42,7 +43,7 @@ get_obs_file <- function(file_path = NULL, cur_folder_path = NULL){
     initials <- dlg_input(message = "Enter initials of coder. (ex: NR)")$res
   }
   if(vid_num %in% NA){
-    vid_num <- dlg_input(message = "Enter which training video was selected. (ex: training_2)")$res
+    vid_num <- dlg_input(message = "Enter which training video was selected. (ex: trainingvid2)")$res
   }
   if(attempt_num %in% NA){
     attempt_num <- as.numeric(dlg_input(message = "Which attempt is this? Enter an integer. (Ex: 1)")$res)
