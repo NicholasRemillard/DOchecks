@@ -15,14 +15,15 @@ rm(list = ls())
   if (file.exists(training_file_name)) {
     training_excel <- read_excel(training_file_name)
   } else {
-    training_excel <- data.frame(Initials = NA, Date = NA,
-                                 trained_on_vid_yn = NA, Dataset = NA, 
-                                 Training_num = NA, Attempt_num = NA,
-                                 Retest = NA, Beh_agreement = NA, 
-                                 Mod_agreement = NA)
+    training_excel <- data.frame(Initials = NA,
+                                 Date_analyzed = NA,
+                                 Dataset = NA, 
+                                 Video_num = NA,
+                                 Retest = NA,
+                                 Attempt_num = NA,
+                                 Passed = NA)
   }
 
-  trained_on_vid_yn <- "yes" # All videos going forward on trained on video
 
 # ------------------------------------------------------------------------------
 # Step 2: Choose files
@@ -78,21 +79,34 @@ rm(list = ls())
   yes_save <-dlg_input(message = "Do you want to save this data? 
                        Please enter 'yes' or 'no'.")$res
   
+  did_pass <-dlg_input(message = "Check the plot output. Did the annotator pass
+                       this video? Type 'yes' or 'no'.")$res
+  
   if (file.exists(training_file_name) & yes_save == "yes") {
     # Add a row and fill with data
     row_num <- nrow(training_excel)+1
     training_excel[row_num,] <- NA
     
     training_excel$Initials[row_num] <- obs_list$initials
-    training_excel$Date[row_num] <- obs_list$creation_date
-    training_excel$Trained_on_video[row_num] <- trained_on_vid_yn
+    training_excel$Date_analyzed[row_num] <- as.character(today())
     training_excel$Dataset[row_num] <- obs_list$study_name
-    training_excel$Training_num[row_num] <- obs_list$vid_num
-    training_excel$Attempt_num[row_num] <- obs_list$attempt_num
+    training_excel$Video_num[row_num] <- obs_list$vid_num
     training_excel$Retest[row_num] <- obs_list$retest_yn
-    training_excel$Beh_agreement[row_num] <- percent_agreement_b
-    training_excel$Mod_agreement[row_num] <- percent_agreement_m
+    training_excel$Attempt_num[row_num] <- obs_list$attempt_num
+    training_excel$Passed[row_num] <- did_pass
     
-    write_xlsx(training_excel, "annotation_training_stats.xlsx")
+    write_xlsx(training_excel, "Output Annotation Stats/annotation_training_stats.xlsx")
+    
+  } else if(!file.exists(training_file_name) & yes_save == "yes") {
+    
+    training_excel$Initials[1] <- obs_list$initials
+    training_excel$Date_analyzed[1] <- as.character(today())
+    training_excel$Dataset[1] <- obs_list$study_name
+    training_excel$Video_num[1] <- obs_list$vid_num
+    training_excel$Retest[1] <- obs_list$retest_yn
+    training_excel$Attempt_num[1] <- obs_list$attempt_num
+    training_excel$Passed[1] <- did_pass
+    
+    write_xlsx(training_excel, "Output Annotation Stats/annotation_training_stats.xlsx")
     
   }
