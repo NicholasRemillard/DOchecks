@@ -83,21 +83,28 @@ get_crit_file <- function(file_path = NULL, vid_num){
 plot_comparison <- function(criterion_frame, comparison_list, input_column) {
   
   criterion <- criterion_frame %>% select(Time_Relative_sf, !!sym(input_column))
-  compare <- comparison_list$compare_frame %>% select(Time_Relative_sf, !!sym(input_column))
-  
   criterion[[input_column]][is.na(criterion[[input_column]])] <- "ZZ_No value"
-  compare[[input_column]][is.na(compare[[input_column]])] <- "ZZ_No value"
-  
   criterion_tall <- data.frame(Time_Relative_sf = criterion$Time_Relative_sf,
-                                 source = rep("Criterion", nrow(criterion)),
-                                 behavior = criterion[[input_column]])
+                               source = rep("Criterion", nrow(criterion)),
+                               behavior = criterion[[input_column]])
+  max_time_crit <- max(criterion_tall$Time_Relative_sf, na.rm = TRUE)
   
-  compare_tall <- data.frame(Time_Relative_sf = compare$Time_Relative_sf,
-                                 source = rep("Comparison", nrow(compare)),
-                                 behavior = compare[[input_column]])
+  # Handling cases where a modifier may not pop up in the compare_frame
+  if(input_column %in% colnames(comparison_list$compare_frame)){
+    compare <- comparison_list$compare_frame %>% select(Time_Relative_sf, !!sym(input_column))
+    compare[[input_column]][is.na(compare[[input_column]])] <- "ZZ_No value"
+    compare_tall <- data.frame(Time_Relative_sf = compare$Time_Relative_sf,
+                               source = rep("Comparison", nrow(compare)),
+                               behavior = compare[[input_column]])
+    max_time_comp <- max(compare_tall$Time_Relative_sf, na.rm = TRUE) 
+  }
   
   # Find the maximum time in each dataset
-  max_time <- max(max(criterion_tall$Time_Relative_sf, na.rm = TRUE), max(compare_tall$Time_Relative_sf, na.rm = TRUE))
+  if(!exists("max_time_comp")){
+    max_time <- max_time_crit
+  }else{
+    max_time <- max(max_time_crit, max_time_comp)
+  }
   
   # Create a sequence of time from 0 to the maximum time in milliseconds
   time_sequence <- seq(0, max_time, by = 0.001)
@@ -111,7 +118,10 @@ plot_comparison <- function(criterion_frame, comparison_list, input_column) {
   
   # Add start_stop column to tall_data_b_crit and tall_data_b_comp
   criterion_tall$start_stop <- rep(c("start", "stop"), length.out = nrow(criterion_tall))
-  compare_tall$start_stop <- rep(c("start", "stop"), length.out = nrow(compare_tall))
+  
+  if(exists("compare_tall")){
+    compare_tall$start_stop <- rep(c("start", "stop"), length.out = nrow(compare_tall)) 
+  }
   
   # Fill in new_df$criterion
   criterion_tall$Time_Relative_sf <- as.numeric(format(criterion_tall$Time_Relative_sf, digits = 3, nsmall = 3))
@@ -126,32 +136,52 @@ plot_comparison <- function(criterion_frame, comparison_list, input_column) {
   }
   
   # Fill in new_df$comparison
-  compare_tall$Time_Relative_sf <- as.numeric(format(compare_tall$Time_Relative_sf, digits = 3, nsmall = 3))
-  
-  rows_to_snag <- seq(from = 1, to = nrow(compare_tall), by = 2)
-  for(i in rows_to_snag){
-    start_row <- which(new_df$Time_Relative_sf %in% compare_tall$Time_Relative_sf[i])
-    end_row <- which(new_df$Time_Relative_sf %in% compare_tall$Time_Relative_sf[i+1])-1
-    behavior <- compare_tall$behavior[i]
-    new_df$comparison[start_row:end_row] <- behavior
+  if(exists("compare_tall")){
+   
+    compare_tall$Time_Relative_sf <- as.numeric(format(compare_tall$Time_Relative_sf, digits = 3, nsmall = 3))
+    
+    rows_to_snag <- seq(from = 1, to = nrow(compare_tall), by = 2)
+    for(i in rows_to_snag){
+      start_row <- which(new_df$Time_Relative_sf %in% compare_tall$Time_Relative_sf[i])
+      end_row <- which(new_df$Time_Relative_sf %in% compare_tall$Time_Relative_sf[i+1])-1
+      behavior <- compare_tall$behavior[i]
+      new_df$comparison[start_row:end_row] <- behavior
+    }
   }
   
   percent_agreement <- format(mean(new_df$criterion == new_df$comparison, na.rm = TRUE) * 100, digits = 3, nsmall = 1)
   
   #print(percent_agreement)
   
-  my_plot <- ggplot() +
-    geom_path(data = criterion_tall, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Criterion")) +
-    geom_path(data = compare_tall, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Your coding")) +
-    theme_minimal() +
-    labs(x = "Relative Time (s)", y = input_column, title = paste("Percent agreement: ", percent_agreement, "%",sep="")) +
-    theme(legend.position = "none") +
-    scale_x_continuous(breaks = seq(0, ceiling(max_time), by = 60))
+  if(!exists("compare_tall")){
+    
+    my_plot <- ggplot() +
+      geom_path(data = criterion_tall, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Criterion")) +
+      theme_minimal() +
+      labs(x = "Relative Time (s)", y = input_column, title = paste("Percent agreement: ", percent_agreement, "%",sep="")) +
+      theme(legend.position = "none") +
+      scale_x_continuous(breaks = seq(0, ceiling(max_time), by = 60))
+    
+  }else{
+    
+    my_plot <- ggplot() +
+      geom_path(data = criterion_tall, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Criterion")) +
+      geom_path(data = compare_tall, aes(x = Time_Relative_sf, y = behavior, group = 1, color = "Your coding")) +
+      theme_minimal() +
+      labs(x = "Relative Time (s)", y = input_column, title = paste("Percent agreement: ", percent_agreement, "%",sep="")) +
+      theme(legend.position = "none") +
+      scale_x_continuous(breaks = seq(0, ceiling(max_time), by = 60))
+    
+  }
+  
+  
   
   percent_agreement <- as.numeric(percent_agreement)
   
-  if(percent_agreement < 90.0){
-    did_pass <- c("Agreement value is below 90%, please recode")
+  if(is.na(percent_agreement)){
+    did_pass <- c("Modifier did not appear in comparison")
+  }else if(percent_agreement < 90.0){
+    did_pass <- c("Agreement value is below 90%, please reannotate")
   }else{
     did_pass <- c("Agreement at or above 90%, passed")
   }

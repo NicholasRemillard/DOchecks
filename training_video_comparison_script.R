@@ -4,6 +4,7 @@
 
 rm(list = ls())
 
+# ------------------------------------------------------------------------------
 # Step 1: Setup
 
   source("training_video_comparison_functions.R")
