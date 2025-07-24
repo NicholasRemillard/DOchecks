@@ -93,7 +93,7 @@ rm(list = ls())
     training_excel$Dataset[row_num] <- obs_list$study_name
     training_excel$Video_num[row_num] <- obs_list$vid_num
     training_excel$Retest[row_num] <- obs_list$retest_yn
-    training_excel$Attempt_num[row_num] <- obs_list$attempt_num
+    training_excel$Attempt_num[row_num] <- as.numeric(obs_list$attempt_num)
     training_excel$Passed[row_num] <- did_pass
     
     write_xlsx(training_excel, "Output Annotation Stats/annotation_training_stats.xlsx")
@@ -105,7 +105,7 @@ rm(list = ls())
     training_excel$Dataset[1] <- obs_list$study_name
     training_excel$Video_num[1] <- obs_list$vid_num
     training_excel$Retest[1] <- obs_list$retest_yn
-    training_excel$Attempt_num[1] <- obs_list$attempt_num
+    training_excel$Attempt_num[1] <- as.numeric(obs_list$attempt_num)
     training_excel$Passed[1] <- did_pass
     
     write_xlsx(training_excel, "Output Annotation Stats/annotation_training_stats.xlsx")
