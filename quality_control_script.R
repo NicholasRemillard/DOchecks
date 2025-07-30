@@ -125,52 +125,59 @@ if(compare_files_yesno == "yes"){ # If comparing two videos and doing quality co
   # Create ggplotly objects
   combined_plot <- make_interactive_plots(plot_beh, plot_beh_int, plot_mod, plot_mod_int)
   
+  source_file <- paste(video1_info$initials,video1_info$vid_num, sep="_")
+  
   # Check transitions
-  check_transitions(video1_frames$beh_frame)
+  trans_frame <- check_transitions(video1_frames$beh_frame)
   
   # Check periods where activities quickly alternate
-  check_alternating(video_data = video1_frames$beh_frame, number_seqs = 5, seq_duration = 10)
+  alt_frame <- check_alternating(video_data = video1_frames$beh_frame, number_seqs = 5, seq_duration = 10)
   
   # Check for long periods of activity
-  check_long_activities(video_data = video1_frames$beh_frame, duration = 900)
+  longact_frame <- check_long_activities(video_data = video1_frames$beh_frame, duration = 900)
   
   # Check for comments
-  check_comments(video1_info$raw_file)
+  comment_frame <- check_comments(video1_info$raw_file)$comment_frame
+  
+  start_time <- check_comments(video1_info$raw_file)$start_time
+  
+  qc_frame <- dplyr::bind_rows(trans_frame, alt_frame, longact_frame, comment_frame)
+  qc_frame$source <- source_file
   
 } # End if else statement here
 
-# Shiny app ----
-
-# User interface
-ui <- fluidPage(
-  titlePanel("Interactive ggplotly Graph"),
-  sidebarLayout(
-    sidebarPanel(
-      h4("Data Summary"),
-      htmlOutput("agreement_text")
-    ),
-    mainPanel(
-      plotlyOutput("interactive_plot")
-    )
-  )
-)
-
-# Server
-server <- function(input, output) {
-  output$interactive_plot <- renderPlotly({
-    combined_plot %>% layout(height = 1600)
-  })
-  
-  output$agreement_text <- renderText({
-    paste(
-      "Behavior of interest only percent agreement: ", beh_int_agree$percent_agreement, "%<br><br>",
-      "Overall behavior percent agreement: ", beh_agree$percent_agreement, "%<br><br>",
-      "Modifier percent agreement corresponding with behaviors of interest: ", mod_int_agree$percent_agreement, "%<br><br>",
-      "Overall modifier percent agreement: ", mod_agree$percent_agreement, "%", sep=""
-    )
-  })
-  
-}
-
-# Run the shiny app
-shinyApp(ui = ui, server = server)
+# # Shiny app ----
+# 
+# # User interface
+# ui <- fluidPage(
+#   titlePanel("Interactive ggplotly Graph"),
+#   sidebarLayout(
+#     sidebarPanel(
+#       h4("Data Summary"),
+#       htmlOutput("agreement_text")
+#     ),
+#     mainPanel(
+#       plotlyOutput("interactive_plot")
+#     )
+#   )
+# )
+# 
+# # Server
+# server <- function(input, output) {
+#   output$interactive_plot <- renderPlotly({
+#     combined_plot %>% layout(height = 1600)
+#   })
+#   
+#   output$agreement_text <- renderText({
+#     paste(
+#       "Behavior of interest only percent agreement: ", beh_int_agree$percent_agreement, "%<br><br>",
+#       "Overall behavior percent agreement: ", beh_agree$percent_agreement, "%<br><br>",
+#       "Modifier percent agreement corresponding with behaviors of interest: ", mod_int_agree$percent_agreement, "%<br><br>",
+#       "Overall modifier percent agreement: ", mod_agree$percent_agreement, "%", sep=""
+#     )
+#   })
+#   
+# }
+# 
+# # Run the shiny app
+# shinyApp(ui = ui, server = server)

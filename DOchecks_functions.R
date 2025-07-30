@@ -435,6 +435,9 @@ check_transitions <- function(video_data){
       t_frame$duration[i] <- video_data$Time_Relative_sf[cur_t_row+1] - video_data$Time_Relative_sf[cur_t_row]
     }
   }
+  
+  t_frame <- tibble::add_column(t_frame, qc_type = "check_transitions", .before = 1)
+  
   return(t_frame)
 }
 
@@ -468,6 +471,8 @@ check_alternating <- function(video_data, number_seqs = 5, seq_duration = 10){
   
   video_data2 <- video_data2[new_vector,]
   
+  video_data2 <- tibble::add_column(video_data2, qc_type = "check_quick_alternating", .before = 1)
+  
   return(video_data2)
 
 }
@@ -486,6 +491,8 @@ check_long_activities <- function(video_data, duration = 900){
   
   video_data2 <- video_data2[long_indices,]
   
+  video_data2 <- tibble::add_column(video_data2, qc_type = "check_long_activities", .before = 1)
+  
   return(video_data2)
 }
 
@@ -496,6 +503,10 @@ check_comments <- function(raw_file){
   comment_rows <- which(complete.cases(raw_file$Comment))
   
   comment_frame <- raw_file[comment_rows,] %>% select(Time_Relative_sf, Behavior, Modifier_1, Event_Type, Comment)
+  
+  comment_frame <- rename(comment_frame, behavior = Behavior)
+  
+  comment_frame <- tibble::add_column(comment_frame, qc_type = "check_comments", .before = 1)
   
   return(list(
     start_time = start_time,
