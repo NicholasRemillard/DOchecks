@@ -89,6 +89,13 @@ plot_comparison <- function(criterion_frame, comparison_list, input_column) {
                                behavior = criterion[[input_column]])
   max_time_crit <- max(criterion_tall$Time_Relative_sf, na.rm = TRUE)
   
+  # Checking if there is an empty behavior row
+  if (input_column == "Behavior") {
+    if (any(is.na(comparison_list$compare_frame[[input_column]]))) {
+      stop("There seems to be an empty behavior row, please check the original file and resubmit.")
+    }
+  }
+  
   # Handling cases where a modifier may not pop up in the compare_frame
   if(input_column %in% colnames(comparison_list$compare_frame)){
     compare <- comparison_list$compare_frame %>% select(Time_Relative_sf, !!sym(input_column))
